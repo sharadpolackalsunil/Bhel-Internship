@@ -37,6 +37,8 @@ class CaptchaSolver:
                 self.device = torch.device('cuda')
             else:
                 self.device = torch.device('cpu')
+        else:
+            self.device = device
 
         if model_path is None:
             # Default to local trocr_model
