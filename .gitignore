@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PyTorch model checkpoints (large files)
+captcha_model/saved_models/*.pth
+*.pt
+
+# Scraped data & outputs
+data/raw/
+data/results.csv
+data/results.xlsx
+data/demo_captchas/
+data/sample_captcha.png
+scraper/captcha_images/
+data/scrape_checkpoint.json
+
+# Training artifacts
+captcha_model/saved_models/training_curves.png
+captcha_model/saved_models/training_history.json
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
