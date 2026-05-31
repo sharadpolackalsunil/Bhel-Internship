@@ -72,40 +72,44 @@ def generate_captcha_image(text=None, add_noise=True, add_lines=False):
         text = ''.join(random.choices(CHARSET, k=CAPTCHA_LENGTH))
 
     # Create white background image
-    img = Image.new('RGB', (IMG_WIDTH, IMG_HEIGHT), color=(255, 255, 255))
-    draw = ImageDraw.Draw(img)
+    img = Image.new('RGBA', (IMG_WIDTH, IMG_HEIGHT), color=(255, 255, 255, 255))
 
     # Get a bold font with slight size variation
-    font_size = random.randint(36, 44)
+    font_size = random.randint(38, 48)
     font = get_font(font_size)
 
-    # Calculate text positioning - spread characters with slight random offsets
-    # This mimics the portal's spaced-out character style
-    total_char_width = 0
+    # Calculate text positioning - spread characters
     char_widths = []
     for ch in text:
         bbox = font.getbbox(ch)
-        w = bbox[2] - bbox[0]
-        char_widths.append(w)
-        total_char_width += w
+        char_widths.append(bbox[2] - bbox[0])
 
-    spacing = random.randint(2, 6)
-    total_width = total_char_width + spacing * (CAPTCHA_LENGTH - 1)
-    x_start = (IMG_WIDTH - total_width) // 2
+    spacing = random.randint(5, 12)
+    total_width = sum(char_widths) + spacing * (CAPTCHA_LENGTH - 1)
+    x_cursor = (IMG_WIDTH - total_width) // 2
 
-    x_cursor = x_start
     for i, ch in enumerate(text):
-        # Slight vertical jitter per character
-        y_offset = random.randint(-4, 4)
-        y_pos = (IMG_HEIGHT - font_size) // 2 + y_offset
-
-        # Character color: mostly black, slight variation
-        r = random.randint(0, 30)
-        g = random.randint(0, 30)
-        b = random.randint(0, 30)
-
-        draw.text((x_cursor, y_pos), ch, fill=(r, g, b), font=font)
+        # Create a blank transparent image for the character
+        char_img = Image.new('RGBA', (font_size * 2, font_size * 2), (255, 255, 255, 0))
+        char_draw = ImageDraw.Draw(char_img)
+        
+        # Draw text in pure black (as seen in the real CAPTCHA)
+        char_draw.text((font_size//2, font_size//2), ch, fill=(0, 0, 0, 255), font=font)
+        
+        # Rotate the character image slightly (-25 to 25 degrees)
+        angle = random.randint(-25, 25)
+        char_img = char_img.rotate(angle, resample=Image.BICUBIC, expand=1)
+        
+        # Calculate Y position with jitter
+        y_pos = (IMG_HEIGHT - font_size) // 2 + random.randint(-6, 6) - (font_size//2)
+        
+        # Paste the character onto the main image using alpha channel as mask
+        img.paste(char_img, (x_cursor - (font_size//2), y_pos), char_img)
+        
         x_cursor += char_widths[i] + spacing
+
+    # Convert back to RGB
+    img = img.convert('RGB')
 
     # Add noise to simulate the portal's CAPTCHA imperfections
     if add_noise:
@@ -150,7 +154,7 @@ class SyntheticCaptchaDataset(Dataset):
         - label: Tensor of shape (CAPTCHA_LENGTH,) — character indices
     """
 
-    def __init__(self, num_samples=50000, add_noise=True, add_lines=False,
+    def __init__(self, num_samples=50000, add_noise=False, add_lines=False,
                  transform=None):
         """
         Args:

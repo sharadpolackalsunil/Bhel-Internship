@@ -30,6 +30,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+# pyrefly: ignore [missing-import]
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import (
@@ -57,9 +58,9 @@ from scraper.enrollment import (
 from captcha_model.predict import CaptchaSolver
 
 
-# ──────────────────────────────────────────────────────────────
+# 
 # Configuration
-# ──────────────────────────────────────────────────────────────
+# 
 
 RESULT_URL = "https://iums.mitsgwalior.in/Result/Result_BTech.aspx"
 PROGRAM_SELECT_URL = "https://iums.mitsgwalior.in/Result/ProgramSelect.aspx"
@@ -77,9 +78,9 @@ MAX_TOTAL_RETRIES = 3     # Max retries per student for other errors
 CHECKPOINT_INTERVAL = 10  # Save progress every N students
 
 
-# ──────────────────────────────────────────────────────────────
+# 
 # Selenium WebDriver Setup
-# ──────────────────────────────────────────────────────────────
+# 
 
 def create_driver(headless=True):
     """
@@ -125,9 +126,9 @@ def create_driver(headless=True):
     return driver
 
 
-# ──────────────────────────────────────────────────────────────
+# 
 # CAPTCHA Handling
-# ──────────────────────────────────────────────────────────────
+# 
 
 def download_captcha_image(driver, save_dir=None):
     """
@@ -144,47 +145,56 @@ def download_captcha_image(driver, save_dir=None):
         PIL.Image: The CAPTCHA image.
     """
     try:
-        # Find CAPTCHA image element
-        # Common ASP.NET CAPTCHA element IDs
-        captcha_selectors = [
-            "imgCaptcha",
-            "CaptchaImage",
-            "captchaImage",
-            "Image1",
-            "imgVarification",
-        ]
-
         captcha_element = None
-        for selector in captcha_selectors:
-            try:
-                captcha_element = driver.find_element(By.ID, selector)
-                break
-            except NoSuchElementException:
-                continue
-
+        
+        # Method 1: Alt text
+        try:
+            captcha_element = driver.find_element(By.XPATH, "//img[@alt='Captcha']")
+        except NoSuchElementException:
+            pass
+            
+        # Method 2: Src containing CaptchaImage
         if captcha_element is None:
-            # Try finding by XPath — look for img near the CAPTCHA text
             try:
-                captcha_element = driver.find_element(
-                    By.XPATH,
-                    "//img[contains(@src, 'Captcha') or contains(@src, 'captcha') "
-                    "or contains(@id, 'Captcha') or contains(@id, 'captcha') "
-                    "or contains(@id, 'img')]"
-                )
+                captcha_element = driver.find_element(By.XPATH, "//img[contains(@src, 'CaptchaImage')]")
             except NoSuchElementException:
-                # Try finding any image that looks like a CAPTCHA
-                images = driver.find_elements(By.TAG_NAME, 'img')
-                for img in images:
-                    src = img.get_attribute('src') or ''
-                    if 'captcha' in src.lower() or 'handler' in src.lower():
-                        captcha_element = img
-                        break
+                pass
+                
+        # Method 3: Common IDs
+        if captcha_element is None:
+            captcha_selectors = ["imgCaptcha", "CaptchaImage", "imgVarification"]
+            for sel in captcha_selectors:
+                try:
+                    captcha_element = driver.find_element(By.ID, sel)
+                    break
+                except NoSuchElementException:
+                    continue
 
         if captcha_element is None:
             raise RuntimeError("Could not find CAPTCHA image element on page")
 
-        # Method 1: Screenshot the element directly
-        png_bytes = captcha_element.screenshot_as_png
+        # Wait for image to fully load
+        driver.execute_script("""
+            var img = arguments[0];
+            if (!img.complete) {
+                return new Promise(resolve => { img.onload = resolve; });
+            }
+        """, captcha_element)
+        time.sleep(0.3)
+
+        # Extract actual image bytes via JS canvas (NOT screenshot)
+        b64_data = driver.execute_script("""
+            var img = arguments[0];
+            var canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            return canvas.toDataURL('image/png').split(',')[1];
+        """, captcha_element)
+        
+        import base64
+        png_bytes = base64.b64decode(b64_data)
         captcha_img = Image.open(BytesIO(png_bytes))
 
         # Save for training data collection (optional)
@@ -197,13 +207,13 @@ def download_captcha_image(driver, save_dir=None):
         return captcha_img
 
     except Exception as e:
-        print(f"  ❌ Error downloading CAPTCHA: {e}")
+        print(f"   Error downloading CAPTCHA: {e}")
         return None
 
 
-# ──────────────────────────────────────────────────────────────
+# 
 # Result Parsing
-# ──────────────────────────────────────────────────────────────
+# 
 
 def parse_result_page(driver):
     """
@@ -220,118 +230,74 @@ def parse_result_page(driver):
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, 'html.parser')
 
+        # Check for error messages
+        page_text = soup.get_text().lower()
+        if 'incorrect' in page_text and 'result' not in page_text[:100].lower():
+             return None
+
         result_data = {}
 
-        # Check for error messages (invalid enrollment, wrong CAPTCHA, etc.)
-        error_indicators = [
-            'invalid', 'not found', 'error', 'incorrect',
-            'wrong captcha', 'try again', 'no record'
-        ]
-        page_text = soup.get_text().lower()
-        for indicator in error_indicators:
-            if indicator in page_text and 'result' not in page_text[:100].lower():
-                return None
+        # 1. Top Section (Name, Roll, Branch, etc)
+        spans = soup.find_all("span")
+        for s in spans:
+            id_attr = s.get("id", "").lower()
+            text = s.get_text(strip=True)
+            if "lblname" in id_attr or "lblstudentname" in id_attr:
+                result_data['student_name'] = text
+            if "lblroll" in id_attr or "lblenrol" in id_attr:
+                result_data['enrollment'] = text
+            if "lblbranch" in id_attr:
+                result_data['branch'] = text
+            if "lblsem" in id_attr:
+                result_data['semester'] = text
+            if "lblcourse" in id_attr:
+                result_data['program'] = text
+            if "lblstatus" in id_attr:
+                result_data['status'] = text
 
-        # Strategy: Extract data from table rows or labeled fields
-        # ASP.NET result pages typically use tables or div-based layouts
-
-        # Method 1: Look for labeled fields (Label: Value pairs)
-        all_text = soup.get_text(separator='\n')
-        lines = [line.strip() for line in all_text.split('\n') if line.strip()]
-
-        # Try to find specific fields
-        field_mapping = {
-            'enrollment': ['enrollment', 'enrol', 'roll no', 'roll number'],
-            'student_name': ['name', 'student name', 'candidate'],
-            'father_name': ['father', 'father name', "father's"],
-            'program': ['program', 'programme', 'course', 'branch'],
-            'semester': ['semester', 'sem'],
-            'sgpa': ['sgpa', 's.g.p.a', 'semester gpa'],
-            'cgpa': ['cgpa', 'c.g.p.a', 'cumulative gpa'],
-            'result_status': ['result', 'status', 'pass', 'fail'],
-            'total_marks': ['total', 'total marks', 'aggregate'],
-            'max_marks': ['max marks', 'maximum'],
-        }
-
-        for key, search_terms in field_mapping.items():
-            for i, line in enumerate(lines):
-                line_lower = line.lower()
-                for term in search_terms:
-                    if term in line_lower:
-                        # Try to extract value from same line or next line
-                        # Pattern: "Label: Value" or "Label\nValue"
-                        if ':' in line:
-                            value = line.split(':', 1)[1].strip()
-                            if value:
-                                result_data[key] = value
-                                break
-                        elif i + 1 < len(lines):
-                            result_data[key] = lines[i + 1]
-                            break
-                if key in result_data:
-                    break
-
-        # Method 2: Parse tables for subject-wise marks
-        tables = soup.find_all('table')
+        # 2. Extract Tables
+        tables = soup.find_all("table")
         subjects = []
-
-        for table in tables:
-            rows = table.find_all('tr')
-            if len(rows) > 1:
-                # Check if this looks like a marks table
-                header_row = rows[0]
-                headers = [th.get_text(strip=True) for th in
-                           header_row.find_all(['th', 'td'])]
-
-                # Look for subject/marks headers
-                header_lower = ' '.join(headers).lower()
-                if any(h in header_lower for h in
-                       ['subject', 'marks', 'grade', 'credit']):
-                    for row in rows[1:]:
-                        cells = [td.get_text(strip=True) for td in
-                                 row.find_all('td')]
-                        if cells and len(cells) >= 2:
-                            subject = {
-                                f'col_{j}': cell
-                                for j, cell in enumerate(cells)
-                            }
-                            subjects.append(subject)
+        for t in tables:
+            rows = t.find_all("tr")
+            if not rows: continue
+            
+            headers = [th.get_text(strip=True).lower() for th in rows[0].find_all(['th', 'td'])]
+            
+            # Subject Table
+            if "course code" in headers or "grade" in headers:
+                for row in rows[1:]:
+                    cells = [td.get_text(strip=True) for td in row.find_all('td')]
+                    if len(cells) >= 4:
+                        subjects.append({
+                            'course_code': cells[0],
+                            'total_credit': cells[1],
+                            'earned_credit': cells[2],
+                            'grade': cells[3]
+                        })
+                        
+            # Footer Table (Result, SGPA, CGPA)
+            elif "result des." in headers or "sgpa" in headers:
+                if len(rows) > 1:
+                    cells = [td.get_text(strip=True) for td in rows[1].find_all('td')]
+                    if len(cells) >= 3:
+                        result_data['result_status'] = cells[0]
+                        result_data['sgpa'] = cells[1]
+                        result_data['cgpa'] = cells[2]
 
         if subjects:
             result_data['subjects'] = subjects
 
-        # Method 3: Try to find SGPA/CGPA from any span/div with numeric value
-        if 'sgpa' not in result_data:
-            for tag in soup.find_all(['span', 'td', 'div', 'label']):
-                tag_id = (tag.get('id') or '').lower()
-                tag_text = tag.get_text(strip=True)
-                if 'sgpa' in tag_id or 'gpa' in tag_id:
-                    try:
-                        val = float(tag_text)
-                        if 0 <= val <= 10:
-                            result_data['sgpa'] = str(val)
-                    except (ValueError, TypeError):
-                        pass
-
-        # Method 4: Look for result status (Pass/Fail)
-        if 'result_status' not in result_data:
-            for tag in soup.find_all(['span', 'td', 'div', 'label']):
-                text = tag.get_text(strip=True).upper()
-                if text in ['PASS', 'FAIL', 'PROMOTED', 'DETAINED',
-                            'COMPARTMENT', 'RE-APPEAR']:
-                    result_data['result_status'] = text
-                    break
-
         return result_data if result_data else None
 
     except Exception as e:
-        print(f"  ❌ Error parsing result: {e}")
+        print(f"   Error parsing result: {e}")
         return None
 
 
-# ──────────────────────────────────────────────────────────────
+# 
 # Main Scraper
-# ──────────────────────────────────────────────────────────────
+# 
 
 def scrape_student_result(driver, enrollment_no, semester, captcha_solver,
                           captcha_save_dir=None):
@@ -350,9 +316,22 @@ def scrape_student_result(driver, enrollment_no, semester, captcha_solver,
     """
     for attempt in range(MAX_CAPTCHA_RETRIES):
         try:
-            # Navigate to result page
-            driver.get(RESULT_URL)
+            # Navigate to program select
+            driver.get(PROGRAM_SELECT_URL)
             time.sleep(1)
+            
+            # Click the radio button for the specific program (e.g. B.Tech)
+            # This is CRITICAL to initialize the ASP.NET Session properly
+            try:
+                rbs = driver.find_elements(By.XPATH, "//input[@type='radio']")
+                for rb in rbs:
+                    if 'BTech' in rb.get_attribute('id') or 'B.Tech' in rb.find_element(By.XPATH, '..').text:
+                        rb.click()
+                        break
+            except Exception as e:
+                print(f"    Warning: Could not select program radio button: {e}")
+            
+            time.sleep(2) # Wait for redirect to Result_BTech.aspx
 
             # Wait for page to load
             WebDriverWait(driver, PAGE_LOAD_TIMEOUT).until(
@@ -402,39 +381,77 @@ def scrape_student_result(driver, enrollment_no, semester, captcha_solver,
 
             # Select semester
             try:
-                semester_selectors = [
-                    "ddlSemester", "ddl_semester", "DropDownList1",
-                    "ddlSem", "ddlChooseSemester"
-                ]
                 semester_dropdown = None
-                for sel in semester_selectors:
+                dropdown_selectors = ["ddlSemester", "ddlsem", "ddl_semester"]
+                for sel in dropdown_selectors:
                     try:
                         semester_dropdown = driver.find_element(By.ID, sel)
                         break
                     except NoSuchElementException:
-                        continue
-
+                        pass
+                
                 if semester_dropdown is None:
-                    selects = driver.find_elements(By.TAG_NAME, 'select')
+                    # Fallback to finding the first select element
+                    selects = driver.find_elements(By.TAG_NAME, "select")
                     if selects:
                         semester_dropdown = selects[0]
-
+                
                 if semester_dropdown:
                     select = Select(semester_dropdown)
+                    # Use provided semester
                     select.select_by_value(str(semester))
-            except Exception:
+            except Exception as e:
+                print(f"    Warning: Could not select semester {semester}: {e}")
+            
+            time.sleep(2) # Wait for PostBack after semester selection
+            
+            # Find CAPTCHA image element
+            captcha_element = None
+            
+            # Method 1: Alt text
+            try:
+                captcha_element = driver.find_element(By.XPATH, "//img[@alt='Captcha']")
+            except NoSuchElementException:
+                pass
+                
+            # Method 2: Src containing CaptchaImage
+            if captcha_element is None:
                 try:
-                    select = Select(semester_dropdown)
-                    select.select_by_visible_text(str(semester))
-                except Exception:
+                    captcha_element = driver.find_element(By.XPATH, "//img[contains(@src, 'CaptchaImage')]")
+                except NoSuchElementException:
                     pass
 
-            time.sleep(0.5)
+            # Method 3: Common IDs
+            if captcha_element is None:
+                captcha_selectors = ["imgCaptcha", "CaptchaImage", "imgVarification"]
+                for sel in captcha_selectors:
+                    try:
+                        captcha_element = driver.find_element(By.ID, sel)
+                        break
+                    except NoSuchElementException:
+                        continue
+
+            if captcha_element is None:
+                raise RuntimeError("Could not find CAPTCHA image element on page")
+
+            # CRITICAL: Force CAPTCHA image to reload!
+            # The semester dropdown triggers an ASP.NET PostBack which generates a new CAPTCHA on the server.
+            # But the browser caches the old image since the URL doesn't change. We must force a refresh.
+            driver.execute_script("arguments[0].src = arguments[0].src + '&t=' + new Date().getTime();", captcha_element)
+            time.sleep(1) # wait for new image to load
+
+            # Wait for image to fully load
+            driver.execute_script("""
+                var img = arguments[0];
+                if (!img.complete) {
+                    return new Promise(resolve => { img.onload = resolve; });
+                }
+            """, captcha_element)
 
             # Download and solve CAPTCHA
             captcha_img = download_captcha_image(driver, captcha_save_dir)
             if captcha_img is None:
-                print(f"  ⚠️  Could not download CAPTCHA (attempt {attempt+1})")
+                print(f"    Could not download CAPTCHA (attempt {attempt+1})")
                 continue
 
             captcha_text, confidence = captcha_solver.solve(captcha_img)
@@ -494,15 +511,33 @@ def scrape_student_result(driver, enrollment_no, semester, captcha_solver,
             if submit_btn is None:
                 raise RuntimeError("Cannot find submit button")
 
-            submit_btn.click()
+            # Scroll into view and click (handling overlapping footer)
+            driver.execute_script("arguments[0].scrollIntoView(true);", submit_btn)
+            time.sleep(0.2)
+            try:
+                submit_btn.click()
+            except Exception:
+                # Fallback if covered by footer
+                driver.execute_script("arguments[0].click();", submit_btn)
 
             # Wait for result page to load
             time.sleep(2)
 
-            # Check for CAPTCHA error (wrong CAPTCHA → page reloads)
+            # Check for JS alerts (e.g., "you have entered a wrong text")
+            try:
+                alert = driver.switch_to.alert
+                alert_text = alert.text.lower()
+                alert.accept()
+                if 'wrong' in alert_text or 'incorrect' in alert_text:
+                    print(f"    Wrong CAPTCHA (alert) (attempt {attempt+1}/{MAX_CAPTCHA_RETRIES})")
+                    continue
+            except Exception:
+                pass
+
+            # Check for CAPTCHA error (wrong CAPTCHA  page reloads)
             page_text = driver.page_source.lower()
             if 'incorrect' in page_text or 'wrong' in page_text:
-                print(f"  ⚠️  Wrong CAPTCHA (attempt {attempt+1}/{MAX_CAPTCHA_RETRIES})")
+                print(f"    Wrong CAPTCHA (attempt {attempt+1}/{MAX_CAPTCHA_RETRIES})")
                 continue
 
             # Parse results
@@ -512,25 +547,25 @@ def scrape_student_result(driver, enrollment_no, semester, captcha_solver,
                 result['semester'] = str(semester)
                 return result
             else:
-                print(f"  ⚠️  No result found for {enrollment_no}")
+                print(f"    No result found for {enrollment_no}")
                 return {'enrollment': enrollment_no, 'semester': str(semester),
                         'result_status': 'NOT_FOUND'}
 
         except TimeoutException:
-            print(f"  ⚠️  Timeout (attempt {attempt+1})")
+            print(f"    Timeout (attempt {attempt+1})")
             continue
         except Exception as e:
-            print(f"  ❌ Error: {e} (attempt {attempt+1})")
+            print(f"   Error: {e} (attempt {attempt+1})")
             continue
 
-    print(f"  ❌ Failed all {MAX_CAPTCHA_RETRIES} attempts for {enrollment_no}")
+    print(f"   Failed all {MAX_CAPTCHA_RETRIES} attempts for {enrollment_no}")
     return {'enrollment': enrollment_no, 'semester': str(semester),
             'result_status': 'SCRAPE_FAILED'}
 
 
-# ──────────────────────────────────────────────────────────────
+# 
 # Checkpoint Management
-# ──────────────────────────────────────────────────────────────
+# 
 
 def save_checkpoint(results, checkpoint_path):
     """Save current results to a checkpoint file."""
@@ -546,9 +581,9 @@ def load_checkpoint(checkpoint_path):
     return []
 
 
-# ──────────────────────────────────────────────────────────────
+# 
 # Main Scrape Pipeline
-# ──────────────────────────────────────────────────────────────
+# 
 
 def run_scraper(model_path=None, headless=True, save_captchas=True,
                 branch_filter=None, resume=True):
@@ -583,7 +618,7 @@ def run_scraper(model_path=None, headless=True, save_captchas=True,
     print("=" * 60)
 
     # Load CAPTCHA solver
-    print("\n📦 Loading CAPTCHA solver...")
+    print("\n Loading CAPTCHA solver...")
     solver = CaptchaSolver(model_path=model_path)
 
     # Generate enrollment numbers
@@ -596,7 +631,7 @@ def run_scraper(model_path=None, headless=True, save_captchas=True,
         ]
 
     total = len(enrollments)
-    print(f"\n🎓 Students to scrape: {total}")
+    print(f"\n Students to scrape: {total}")
 
     # Resume from checkpoint
     results = []
@@ -605,10 +640,10 @@ def run_scraper(model_path=None, headless=True, save_captchas=True,
         results = load_checkpoint(checkpoint_path)
         scraped_enrollments = {r.get('enrollment') for r in results}
         if scraped_enrollments:
-            print(f"📋 Resuming from checkpoint: {len(scraped_enrollments)} already scraped")
+            print(f" Resuming from checkpoint: {len(scraped_enrollments)} already scraped")
 
     # Create WebDriver
-    print("\n🌐 Starting browser...")
+    print("\n Starting browser...")
     driver = create_driver(headless=headless)
 
     try:
@@ -655,21 +690,21 @@ def run_scraper(model_path=None, headless=True, save_captchas=True,
         save_checkpoint(results, checkpoint_path)
 
     except KeyboardInterrupt:
-        print("\n\n⚠️  Scraping interrupted by user. Saving progress...")
+        print("\n\n  Scraping interrupted by user. Saving progress...")
         save_checkpoint(results, checkpoint_path)
     except Exception as e:
-        print(f"\n❌ Fatal error: {e}")
+        print(f"\n Fatal error: {e}")
         save_checkpoint(results, checkpoint_path)
         raise
     finally:
         driver.quit()
-        print("🌐 Browser closed.")
+        print(" Browser closed.")
 
     # Save raw results
     raw_path = os.path.join(raw_dir, f'raw_results_{SEMESTER}.json')
     with open(raw_path, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
-    print(f"\n💾 Raw results saved to: {raw_path}")
+    print(f"\n Raw results saved to: {raw_path}")
 
     # Summary
     print("\n" + "=" * 60)

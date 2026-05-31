@@ -273,7 +273,7 @@ def train(config=None):
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.5, patience=5, verbose=True
+        optimizer, mode='min', factor=0.5, patience=5
     )
 
     # Training history

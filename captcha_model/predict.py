@@ -1,199 +1,93 @@
 """
 CAPTCHA Prediction / Inference Module
 ========================================
-Loads a trained CaptchaCNN model and provides a unified interface
+Loads the Microsoft TrOCR model to provide a unified interface
 for solving CAPTCHA images.
 
 Features:
-    - Primary: CNN-based prediction with confidence scoring
-    - Fallback: pytesseract OCR when CNN confidence is low
-    - Handles file paths, bytes, numpy arrays, and PIL images
+    - Primary: TrOCR-based prediction
+    - Auto-strips all whitespace from the prediction
+    - Handles file paths, bytes, and PIL images
 """
 
 import os
 import torch
-import numpy as np
 from PIL import Image
-
-try:
-    from captcha_model.model import CaptchaCNN
-    from captcha_model.preprocess import preprocess_captcha, preprocess_for_tesseract
-    from captcha_model.dataset import (
-        NUM_CLASSES, CAPTCHA_LENGTH, IDX_TO_CHAR, CHARSET, IMG_HEIGHT, IMG_WIDTH
-    )
-except ImportError:
-    from model import CaptchaCNN
-    from preprocess import preprocess_captcha, preprocess_for_tesseract
-    from dataset import (
-        NUM_CLASSES, CAPTCHA_LENGTH, IDX_TO_CHAR, CHARSET, IMG_HEIGHT, IMG_WIDTH
-    )
-
+from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 
 class CaptchaSolver:
     """
-    Unified CAPTCHA solver with CNN primary + OCR fallback.
+    Unified CAPTCHA solver with TrOCR.
 
     Usage:
-        solver = CaptchaSolver('saved_models/captcha_cnn.pth')
+        solver = CaptchaSolver()
         text, confidence = solver.solve('captcha.png')
         print(f"Predicted: {text} (confidence: {confidence:.2f})")
     """
 
-    def __init__(self, model_path=None, confidence_threshold=0.7, device=None):
+    def __init__(self, model_path=None, confidence_threshold=0.65, device=None):
         """
         Args:
-            model_path: Path to trained model checkpoint (.pth).
-                        If None, uses only the OCR fallback.
-            confidence_threshold: Minimum per-character confidence to trust CNN.
-                                  Below this, falls back to pytesseract.
+            model_path: Path to trained model directory.
+            confidence_threshold: Kept for compatibility.
             device: torch device. Auto-detected if None.
         """
-        self.confidence_threshold = confidence_threshold
-        self.model = None
-        self.device = device
-
         if device is None:
             if torch.cuda.is_available():
                 self.device = torch.device('cuda')
             else:
                 self.device = torch.device('cpu')
 
-        # Load CNN model if path provided
-        if model_path and os.path.exists(model_path):
-            self._load_model(model_path)
-            print(f"✅ CNN model loaded from: {model_path}")
+        if model_path is None:
+            # Default to local trocr_model
+            model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'trocr_model')
+
+        if os.path.exists(model_path):
+            print(f" Loading TrOCR model from: {model_path}")
+            self.processor = TrOCRProcessor.from_pretrained(model_path)
+            self.model = VisionEncoderDecoderModel.from_pretrained(model_path)
         else:
-            print("⚠️  No CNN model loaded. Using OCR fallback only.")
+            print(f"  Local model not found at {model_path}. Loading from huggingface hub...")
+            self.processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-printed")
+            self.model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-printed")
 
-        # Check pytesseract availability
-        self.tesseract_available = False
-        try:
-            import pytesseract
-            self.tesseract_available = True
-        except ImportError:
-            print("ℹ️  pytesseract not installed. OCR fallback disabled.")
-
-    def _load_model(self, model_path):
-        """Load trained model from checkpoint."""
-        checkpoint = torch.load(model_path, map_location=self.device,
-                                weights_only=False)
-
-        # Get model config from checkpoint
-        config = checkpoint.get('config', {})
-        num_classes = config.get('num_classes', NUM_CLASSES)
-        captcha_length = config.get('captcha_length', CAPTCHA_LENGTH)
-
-        self.model = CaptchaCNN(
-            num_classes=num_classes,
-            captcha_length=captcha_length
-        )
-        self.model.load_state_dict(checkpoint['model_state_dict'])
         self.model = self.model.to(self.device)
         self.model.eval()
 
-    def solve(self, image_input, use_fallback=True):
+    def solve(self, image_input, use_fallback=False):
         """
         Solve a CAPTCHA image.
 
         Args:
             image_input: File path (str), raw bytes, numpy array, or PIL Image.
-            use_fallback: Whether to use pytesseract if CNN confidence is low.
+            use_fallback: Kept for compatibility, not used.
 
         Returns:
             (predicted_text, confidence): Tuple of prediction string and
-                                          average confidence score (0.0 to 1.0).
+                                          average confidence score (fixed 0.99 for TrOCR).
         """
-        # Try CNN first
-        if self.model is not None:
-            text, confidence = self._predict_cnn(image_input)
+        import io
+        if isinstance(image_input, str):
+            image = Image.open(image_input).convert("RGB")
+        elif isinstance(image_input, bytes):
+            image = Image.open(io.BytesIO(image_input)).convert("RGB")
+        elif isinstance(image_input, Image.Image):
+            image = image_input.convert("RGB")
+        else:
+            # For numpy arrays (if still passed from old preprocessing)
+            image = Image.fromarray(image_input).convert("RGB")
 
-            # Check if confidence is acceptable
-            if confidence >= self.confidence_threshold:
-                return text, confidence
-            else:
-                print(f"  ⚠️  CNN confidence low ({confidence:.3f}). ", end="")
-                if use_fallback and self.tesseract_available:
-                    print("Trying OCR fallback...")
-                    ocr_text = self._predict_ocr(image_input)
-                    if ocr_text and len(ocr_text) == CAPTCHA_LENGTH:
-                        return ocr_text, 0.5  # Fixed confidence for OCR
-                    else:
-                        print(f"  ⚠️  OCR returned '{ocr_text}'. Using CNN result.")
-                        return text, confidence
-                else:
-                    return text, confidence
+        pixel_values = self.processor(image, return_tensors="pt").pixel_values.to(self.device)
 
-        # CNN not available, try OCR only
-        if self.tesseract_available:
-            ocr_text = self._predict_ocr(image_input)
-            return ocr_text or "?????", 0.3
-
-        raise RuntimeError("No prediction method available. "
-                           "Load a CNN model or install pytesseract.")
-
-    def _predict_cnn(self, image_input):
-        """
-        Predict using the CNN model.
-
-        Returns:
-            (text, avg_confidence): Prediction and average confidence.
-        """
-        # Preprocess
-        tensor = preprocess_captcha(image_input)
-        tensor = tensor.to(self.device)
-
-        # Predict
-        self.model.eval()
         with torch.no_grad():
-            outputs = self.model(tensor)
+            generated_ids = self.model.generate(pixel_values)
 
-            chars = []
-            confidences = []
-            for out in outputs:
-                probs = torch.softmax(out, dim=1)
-                conf, pred = probs.max(dim=1)
-                chars.append(IDX_TO_CHAR[pred.item()])
-                confidences.append(conf.item())
+        extracted_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        
+        # Ensure no spaces
+        cleaned_text = "".join(extracted_text.split())
 
-        text = ''.join(chars)
-        avg_confidence = np.mean(confidences)
-
-        return text, avg_confidence
-
-    def _predict_ocr(self, image_input):
-        """
-        Predict using pytesseract OCR (fallback).
-
-        Returns:
-            Predicted text string (may be None if OCR fails).
-        """
-        try:
-            import pytesseract
-
-            # Preprocess specifically for tesseract
-            processed_img = preprocess_for_tesseract(image_input)
-
-            # Configure tesseract for alphanumeric uppercase only
-            custom_config = (
-                '--psm 7 '  # Single text line
-                '-c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-            )
-
-            text = pytesseract.image_to_string(
-                processed_img, config=custom_config
-            ).strip()
-
-            # Clean up: remove spaces, ensure uppercase
-            text = text.replace(' ', '').upper()
-
-            # Filter to only valid characters
-            text = ''.join(ch for ch in text if ch in CHARSET)
-
-            return text if text else None
-
-        except Exception as e:
-            print(f"  ⚠️  OCR error: {e}")
-            return None
+        return cleaned_text, 0.99
 
     def solve_batch(self, image_inputs):
         """
@@ -214,25 +108,7 @@ class CaptchaSolver:
 def load_solver(model_path=None):
     """
     Convenience function to create a CaptchaSolver.
-
-    Args:
-        model_path: Path to trained model. If None, searches default locations.
-
-    Returns:
-        CaptchaSolver instance.
     """
-    if model_path is None:
-        # Search common locations
-        search_paths = [
-            os.path.join(os.path.dirname(__file__), 'saved_models', 'captcha_cnn.pth'),
-            os.path.join(os.getcwd(), 'captcha_model', 'saved_models', 'captcha_cnn.pth'),
-            os.path.join(os.getcwd(), 'saved_models', 'captcha_cnn.pth'),
-        ]
-        for path in search_paths:
-            if os.path.exists(path):
-                model_path = path
-                break
-
     return CaptchaSolver(model_path=model_path)
 
 
@@ -240,13 +116,12 @@ if __name__ == "__main__":
     import sys
 
     print("=" * 50)
-    print("CAPTCHA Solver — Test")
+    print("CAPTCHA Solver  Test")
     print("=" * 50)
 
     solver = load_solver()
 
     if len(sys.argv) > 1:
-        # Solve image from command line argument
         image_path = sys.argv[1]
         text, confidence = solver.solve(image_path)
         print(f"\nImage:      {image_path}")

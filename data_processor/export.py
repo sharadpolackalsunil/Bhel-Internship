@@ -122,10 +122,26 @@ def process_results(results):
         # Add subject-wise data as additional columns
         subjects = r.get('subjects', [])
         for j, subj in enumerate(subjects):
-            for col_key, col_val in subj.items():
-                row[f'Subject_{j+1}_{col_key}'] = col_val
+            code = subj.get('course_code', f'Subj_{j+1}')
+            # Clean up the code a bit (e.g., "27242201- [T]" -> "27242201 [T]")
+            clean_code = str(code).replace('- ', ' ').strip()
+            
+            row[f'{clean_code} Total Credit'] = subj.get('total_credit', '')
+            row[f'{clean_code} Earned Credit'] = subj.get('earned_credit', '')
+            row[f'{clean_code} Grade'] = subj.get('grade', '')
 
         rows.append(row)
+
+    if len(rows) == 0:
+        columns = [
+            'Enrollment_No', 'Student_Name', 'Father_Name', 'Branch', 'Branch_Code',
+            'Semester', 'Program', 'SGPA', 'CGPA', 'Result_Status', 'Total_Marks',
+            'Max_Marks', 'Rank'
+        ]
+        df = pd.DataFrame(columns=columns)
+        print("  ✅ Processed 0 student records")
+        print("  ⚠️  No SGPA data available")
+        return df
 
     df = pd.DataFrame(rows)
 
@@ -136,19 +152,20 @@ def process_results(results):
     if 'CGPA' in df.columns:
         df['CGPA'] = pd.to_numeric(df['CGPA'], errors='coerce')
 
-    # Sort by SGPA in ascending order (user requested ascending)
-    df = df.sort_values(by='SGPA', ascending=True, na_position='last')
-
-    # Add rank (ascending SGPA means rank 1 = lowest, but let's rank desc)
-    # Actually, rank by SGPA descending (best students get rank 1)
-    df['Rank'] = df['SGPA'].rank(ascending=False, method='min').astype('Int64')
+    if 'SGPA' in df.columns:
+        # Sort by SGPA in ascending order (user requested ascending)
+        df = df.sort_values(by='SGPA', ascending=True, na_position='last')
+        # Add rank
+        df['Rank'] = df['SGPA'].rank(ascending=False, method='min').astype('Int64')
 
     # Reset index
     df = df.reset_index(drop=True)
 
     print(f"  ✅ Processed {len(df)} student records")
-    print(f"  📊 SGPA range: {df['SGPA'].min():.2f} — {df['SGPA'].max():.2f}"
-          if df['SGPA'].notna().any() else "  ⚠️  No SGPA data available")
+    if 'SGPA' in df.columns and df['SGPA'].notna().any():
+        print(f"  📊 SGPA range: {df['SGPA'].min():.2f} — {df['SGPA'].max():.2f}")
+    else:
+        print("  ⚠️  No SGPA data available")
 
     return df
 

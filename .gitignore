@@ -23,6 +23,7 @@ env/
 
 # PyTorch model checkpoints (large files)
 captcha_model/saved_models/*.pth
+captcha_model/trocr_model/
 *.pt
 
 # Scraped data & outputs
@@ -48,3 +49,6 @@ desktop.ini
 
 # Logs
 *.log
+
+# Test Directory
+Test/

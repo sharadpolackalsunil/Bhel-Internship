@@ -10,11 +10,9 @@ Automated pipeline to extract semester results from the MITS Gwalior university 
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| CAPTCHA Solver | PyTorch CNN | Recognizes 5-char alphanumeric CAPTCHAs |
-| Image Processing | OpenCV | Preprocessing pipeline (grayscale → threshold → clean) |
+| CAPTCHA Solver | TrOCR (Transformers) | Recognizes 5-char alphanumeric CAPTCHAs with high accuracy |
 | Web Scraper | Selenium | Automates form submission on ASP.NET portal |
 | Data Processing | Pandas | Sorts, ranks, and exports results |
-| OCR Fallback | pytesseract | Backup solver when CNN confidence is low |
 
 ## 🏗️ Architecture
 
@@ -22,24 +20,18 @@ Automated pipeline to extract semester results from the MITS Gwalior university 
 BHEL PROJECT/
 ├── main.py                     # 🎯 Run the full pipeline
 ├── requirements.txt
-├── train_colab.ipynb           # 🧠 Google Colab training notebook
 │
-├── captcha_model/              # Phase 2: Deep Learning
-│   ├── dataset.py              # Synthetic CAPTCHA generator
-│   ├── model.py                # CNN architecture (multi-head)
-│   ├── train.py                # Training script
-│   ├── predict.py              # Inference + fallback logic
-│   ├── preprocess.py           # OpenCV preprocessing
-│   └── saved_models/
-│       └── captcha_cnn.pth     # Trained model weights
+├── captcha_model/              # Phase 2: Deep Learning (OCR)
+│   ├── predict.py              # TrOCR Inference logic
+│   └── trocr_model/            # Downloaded huggingface model weights
 │
 ├── scraper/                    # Phase 3: Automated Pipeline
-│   ├── scraper.py              # Selenium-based portal scraper
+│   ├── scraper.py              # Selenium-based ASP.NET portal scraper
 │   ├── enrollment.py           # Enrollment number generator
-│   └── captcha_images/         # Downloaded CAPTCHAs (for training)
+│   └── captcha_images/         # Saved CAPTCHAs
 │
 ├── data_processor/             # Phase 4: Data Export
-│   └── export.py               # CSV + Excel export with formatting
+│   └── export.py               # CSV + Excel export with dynamic course formatting
 │
 └── data/                       # Output
     ├── results.csv             # All 210 students, SGPA ascending
@@ -54,18 +46,11 @@ BHEL PROJECT/
 pip install -r requirements.txt
 ```
 
-### 2. Train the CAPTCHA Model
+### 2. The CAPTCHA Model
 
-**Option A: Google Colab (Recommended — Free GPU)**
-1. Upload `train_colab.ipynb` to Google Colab
-2. Enable GPU: `Runtime → Change runtime type → T4 GPU`
-3. Run all cells
-4. Download `captcha_cnn.pth` and place it in `captcha_model/saved_models/`
+This project uses Microsoft's **TrOCR (Transformers-based OCR)**. You do NOT need to train a model from scratch! 
 
-**Option B: Local Training**
-```bash
-python main.py --train-only --epochs 30 --batch-size 64
-```
+On your first run, the pre-trained Hugging Face model (`microsoft/trocr-base-printed`) will automatically download itself and save to the `captcha_model/trocr_model/` folder.
 
 ### 3. Run the Scraper
 
@@ -98,59 +83,40 @@ python main.py --export-only
 | Artificial Intelligence | BTAI | BTAI24O1001 → BTAI24O1070 | 70 |
 | **Total** | | | **210** |
 
-## 🧠 CNN Model
+## 🧠 CAPTCHA Solving Engine
 
 ### Architecture
+This project utilizes **Microsoft's TrOCR** (Transformer-based Optical Character Recognition) to decode CAPTCHAs accurately without any complex preprocessing pipelines.
 
 ```
-Input: Grayscale (1 × 80 × 200)
+Input: Raw CAPTCHA image
   │
-  ├── Conv Block 1: 1→32 channels (Conv→BN→ReLU→MaxPool)
-  ├── Conv Block 2: 32→64
-  ├── Conv Block 3: 64→128
-  └── Conv Block 4: 128→256
+  ▼
+TrOCRProcessor (microsoft/trocr-base-printed)
   │
-  ├── Flatten: 256×5×12 = 15,360
-  ├── FC: 15,360 → 1,024 → 512
+  ▼
+VisionEncoderDecoderModel
   │
-  └── 5 Classification Heads (one per character position)
-      ├── Head 1: 512 → 36 classes (A-Z, 0-9)
-      ├── Head 2: 512 → 36
-      ├── Head 3: 512 → 36
-      ├── Head 4: 512 → 36
-      └── Head 5: 512 → 36
+  ▼
+Output String (with whitespace stripped)
 ```
 
-### Training Details
-
-- **Dataset**: 50,000 synthetic CAPTCHAs (on-the-fly generation)
-- **Loss**: Sum of CrossEntropy for each character position
-- **Optimizer**: Adam (lr=1e-3, weight_decay=1e-5)
-- **Scheduler**: ReduceLROnPlateau (patience=5)
-- **Early Stopping**: patience=7 epochs
-
-### Hybrid Solving Strategy
+### Solving Strategy
 
 ```
-CAPTCHA Image
+CAPTCHA Image (Fetched via JS Canvas Base64)
      │
      ▼
-  OpenCV Preprocessing
-  (grayscale → blur → threshold → morphology → resize)
+  TrOCR Prediction 
      │
      ▼
-  CNN Prediction ──── confidence ≥ 0.7? ──── YES → Use CNN result
-     │                                              │
-     NO                                             │
-     │                                              │
-     ▼                                              │
-  pytesseract OCR (fallback) ─────────────────────► Final Text
+  Strip Whitespace ─────────────────────► Final Text
 ```
 
 ## 📊 Output Format
 
 ### CSV (`results.csv`)
-All 210 students sorted by SGPA (ascending), includes: enrollment, name, branch, SGPA, CGPA, pass/fail status, grades.
+All 210 students sorted by SGPA (ascending), includes: enrollment, name, branch, SGPA, CGPA, pass/fail status, and dynamically generated columns for every course (Total Credit, Earned Credit, and Grade).
 
 ### Excel (`results.xlsx`)
 4 sheets with formatted tables:
@@ -169,15 +135,8 @@ Features: Color-coded SGPA (🟢 ≥9.0, 🟡 ≥7.5, 🔴 <5.0), pass/fail high
 python main.py [OPTIONS]
 
 Modes:
-  --train-only     Only train the CNN model
-  --scrape-only    Only run the scraper
-  --export-only    Only export data
-
-Training:
-  --epochs N       Training epochs (default: 30)
-  --batch-size N   Batch size (default: 64)
-  --lr RATE        Learning rate (default: 0.001)
-  --train-size N   Training samples (default: 50000)
+  --scrape-only    Run the scraper (default if no mode specified)
+  --export-only    Only export data from raw JSON to CSV/Excel
 
 Scraping:
   --model PATH     Path to trained model
@@ -200,13 +159,12 @@ Export:
 ## ⚙️ Tech Stack
 
 - **Python 3.10+**
-- **PyTorch** — CNN model training and inference
-- **OpenCV** — Image preprocessing pipeline
+- **Transformers (Hugging Face)** — TrOCR model for OCR
+- **PyTorch** — Deep learning backend for TrOCR
 - **Selenium** — Browser automation for ASP.NET portal
 - **Pandas** — Data processing and export
-- **Pillow** — CAPTCHA image generation
+- **Pillow** — Image handling
 - **BeautifulSoup4** — HTML result parsing
-- **pytesseract** — OCR fallback
 
 ---
 
