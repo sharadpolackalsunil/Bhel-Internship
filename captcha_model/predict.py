@@ -13,6 +13,7 @@ Features:
 import os
 import torch
 from PIL import Image
+# pyrefly: ignore [missing-import]
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 
 class CaptchaSolver:
