@@ -6,14 +6,14 @@ Scrapes semester results from the live MITS Gwalior university portal:
 
 Strategy:
     1. Selenium for browser automation (handles ASP.NET ViewState + JavaScript)
-    2. CNN-based CAPTCHA solving (primary) with OCR fallback
+    2. TrOCR-based CAPTCHA solving
     3. Rate-limited requests (2-4 second delays)
     4. Checkpoint-based progress saving
     5. Retry logic for failed CAPTCHAs
 
 Dependencies:
     - selenium + webdriver-manager (auto-downloads ChromeDriver)
-    - captcha_model (CNN solver)
+    - captcha_model (TrOCR solver)
     - beautifulsoup4 (HTML parsing)
 """
 
@@ -591,7 +591,7 @@ def run_scraper(model_path=None, headless=True, save_captchas=True,
     Run the full scraping pipeline for all students.
 
     Args:
-        model_path: Path to trained CAPTCHA CNN model.
+        model_path: Path to trained CAPTCHA TrOCR model.
         headless: Run browser without GUI.
         save_captchas: Save downloaded CAPTCHA images (for training data).
         branch_filter: Optional list of branch codes to scrape (e.g., ['BTAD']).
