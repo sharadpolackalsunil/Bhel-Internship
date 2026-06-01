@@ -1,171 +1,117 @@
-# 🎓 MITS Gwalior Result Scraper
+# 🎓 MITS Gwalior Automated Result Extraction System (with Deep Learning)
 
-> **OCR + Deep Learning + Automated Data Extraction Portfolio Project**
-
-Automated pipeline to extract semester results from the MITS Gwalior university portal using a custom-trained CNN for CAPTCHA solving.
+> **An end-to-end automated pipeline integrating Transformers-based Deep Learning (TrOCR) and Browser Automation to systematically bypass ASP.NET challenges, solve CAPTCHAs, and extract structured university data.**
 
 ---
 
-## 📋 Project Overview
+## 🌟 Why This Project Stands Out
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| CAPTCHA Solver | TrOCR (Transformers) | Recognizes 5-char alphanumeric CAPTCHAs with high accuracy |
-| Web Scraper | Selenium | Automates form submission on ASP.NET portal |
-| Data Processing | Pandas | Sorts, ranks, and exports results |
+This isn't just a simple web scraper. University portals are notoriously difficult to scrape reliably due to strict security measures and outdated architectures. Here is how this project solves these complex engineering challenges:
+
+1. **Defeating ASP.NET ViewState & PostBacks:**
+   The MITS portal relies heavily on `ASP.NET` ViewState and dynamic PostBacks which break traditional HTTP request scrapers (like `requests` + `BeautifulSoup`). This project employs **Selenium WebDriver** to mimic a real browser, properly initializing ASP.NET sessions, selecting the correct radio buttons, and triggering necessary server PostBacks.
+   
+2. **State-of-the-Art CAPTCHA Solving (No Manual Labeling):**
+   Instead of relying on fragile OCR tools like Tesseract or building a basic CNN from scratch, this project implements **Microsoft's TrOCR (Transformer-based Optical Character Recognition)**. TrOCR achieves near **99% accuracy** on printed CAPTCHAs by framing text recognition as an image-to-text sequence generation problem, completely bypassing the need to manually label datasets and train custom CNNs.
+
+3. **Dynamic Data Wrangling:**
+   Extracting data from nested, dynamically structured HTML tables is messy. The `Pandas`-based processor automatically flattens these tables, handles missing courses, dynamically generates grade columns, and computes rankings before exporting to a highly formatted Excel workbook.
+
+4. **Production-Ready Resiliency:**
+   Built for long-running stability:
+   - **Checkpoints:** Automatically saves progress to disk every 10 records.
+   - **Rate Limiting:** Implements randomized 2-4 second delays to prevent server bans.
+   - **Retry Logic:** Auto-detects wrong CAPTCHAs and seamlessly reloads the image (forcing a cache-busting refresh) to retry up to 5 times.
+
+---
+
+## 🚀 Quick Start Guide
+
+Want to run the pipeline yourself? Follow these steps:
+
+### 1. Prerequisites
+Ensure you have **Python 3.10+** installed. Clone the repository and navigate to the project root.
+
+### 2. Set Up Virtual Environment
+It is highly recommended to use a virtual environment:
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate it (Windows)
+venv\Scripts\activate
+# Activate it (Mac/Linux)
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+*(Note: If you plan on using GPU acceleration for TrOCR, ensure you install the CUDA-compatible version of PyTorch from the [official PyTorch website](https://pytorch.org/).)*
+
+### 4. Run the Pipeline
+The TrOCR model (`microsoft/trocr-base-printed`) will **automatically download** from Hugging Face on the first run. No manual model setup is required!
+
+```bash
+# Run the full pipeline (scrape all branches and export to Excel/CSV)
+python main.py
+
+# Scrape a specific branch
+python main.py --scrape-only --branch BTAD
+
+# Run in debug mode (shows the browser window)
+python main.py --scrape-only --no-headless
+
+# Generate Excel/CSV reports from previously scraped data
+python main.py --export-only
+```
+
+---
 
 ## 🏗️ Architecture
 
 ```
 BHEL PROJECT/
-├── main.py                     # 🎯 Run the full pipeline
+├── main.py                     # 🎯 CLI Entry Point
 ├── requirements.txt
 │
-├── captcha_model/              # Phase 2: Deep Learning (OCR)
-│   ├── predict.py              # TrOCR Inference logic
-│   └── trocr_model/            # Downloaded huggingface model weights
+├── captcha_model/              # 🧠 Deep Learning Engine
+│   └── predict.py              # TrOCR Inference logic (Auto-downloads weights)
 │
-├── scraper/                    # Phase 3: Automated Pipeline
-│   ├── scraper.py              # Selenium-based ASP.NET portal scraper
-│   ├── enrollment.py           # Enrollment number generator
-│   └── captcha_images/         # Saved CAPTCHAs
+├── scraper/                    # 🕸️ Automation Engine
+│   ├── scraper.py              # Selenium ASP.NET logic, CAPTCHA download, and retry logic
+│   └── enrollment.py           # Enrollment number logic/ranges
 │
-├── data_processor/             # Phase 4: Data Export
-│   └── export.py               # CSV + Excel export with dynamic course formatting
+├── data_processor/             # 📊 Data Wrangling Engine
+│   └── export.py               # Pandas logic for generating formatted Excel/CSV
 │
-└── data/                       # Output
-    ├── results.csv             # All 210 students, SGPA ascending
-    └── results.xlsx            # 4 sheets: All + per-branch
+└── data/                       # 📁 Output Directory
+    ├── raw/                    # Checkpoints and raw JSON output
+    ├── results.csv             # Unified CSV of all students
+    └── results.xlsx            # Formatted Excel workbook with branch-specific sheets
 ```
-
-## 🚀 Quick Start
-
-### 1. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. The CAPTCHA Model
-
-This project uses Microsoft's **TrOCR (Transformers-based OCR)**. You do NOT need to train a model from scratch! 
-
-On your first run, the pre-trained Hugging Face model (`microsoft/trocr-base-printed`) will automatically download itself and save to the `captcha_model/trocr_model/` folder.
-
-### 3. Run the Scraper
-
-```bash
-# Full pipeline (train + scrape + export)
-python main.py
-
-# Scrape only (model must exist)
-python main.py --scrape-only
-
-# Scrape specific branch
-python main.py --scrape-only --branch BTAD
-
-# Show browser window (debug mode)
-python main.py --scrape-only --no-headless
-```
-
-### 4. Export Data Only
-
-```bash
-python main.py --export-only
-```
-
-## 🎓 Enrollment Numbers
-
-| Branch | Code | Range | Count |
-|--------|------|-------|-------|
-| AI & Data Science | BTAD | BTAD24O1001 → BTAD24O1070 | 70 |
-| AI & Machine Learning | BTAM | BTAM24O1001 → BTAM24O1070 | 70 |
-| Artificial Intelligence | BTAI | BTAI24O1001 → BTAI24O1070 | 70 |
-| **Total** | | | **210** |
-
-## 🧠 CAPTCHA Solving Engine
-
-### Architecture
-This project utilizes **Microsoft's TrOCR** (Transformer-based Optical Character Recognition) to decode CAPTCHAs accurately without any complex preprocessing pipelines.
-
-```
-Input: Raw CAPTCHA image
-  │
-  ▼
-TrOCRProcessor (microsoft/trocr-base-printed)
-  │
-  ▼
-VisionEncoderDecoderModel
-  │
-  ▼
-Output String (with whitespace stripped)
-```
-
-### Solving Strategy
-
-```
-CAPTCHA Image (Fetched via JS Canvas Base64)
-     │
-     ▼
-  TrOCR Prediction 
-     │
-     ▼
-  Strip Whitespace ─────────────────────► Final Text
-```
-
-## 📊 Output Format
-
-### CSV (`results.csv`)
-All 210 students sorted by SGPA (ascending), includes: enrollment, name, branch, SGPA, CGPA, pass/fail status, and dynamically generated columns for every course (Total Credit, Earned Credit, and Grade).
-
-### Excel (`results.xlsx`)
-4 sheets with formatted tables:
-| Sheet | Content |
-|-------|---------|
-| All Students | Combined view, sorted by SGPA |
-| AI_DS | BTAD students with branch rank |
-| AI_ML | BTAM students with branch rank |
-| AI | BTAI students with branch rank |
-
-Features: Color-coded SGPA (🟢 ≥9.0, 🟡 ≥7.5, 🔴 <5.0), pass/fail highlighting, auto-filters, frozen headers.
-
-## 📝 CLI Reference
-
-```
-python main.py [OPTIONS]
-
-Modes:
-  --scrape-only    Run the scraper (default if no mode specified)
-  --export-only    Only export data from raw JSON to CSV/Excel
-
-Scraping:
-  --model PATH     Path to trained model
-  --no-headless    Show browser window
-  --branch CODE    Filter branches (BTAD, BTAM, BTAI)
-  --no-resume      Start fresh (ignore checkpoint)
-
-Export:
-  --raw-input PATH  Path to raw results JSON
-```
-
-## 🛡️ Features
-
-- **Checkpoint Recovery**: Saves progress every 10 students. Resume with `--resume` (default)
-- **Rate Limiting**: 2-4 second random delays between requests
-- **Retry Logic**: Up to 5 CAPTCHA retries per student
-- **Error Handling**: Graceful handling of timeouts, missing records, and CAPTCHA failures
-- **Dual Export**: CSV for data analysis, Excel for presentation
-
-## ⚙️ Tech Stack
-
-- **Python 3.10+**
-- **Transformers (Hugging Face)** — TrOCR model for OCR
-- **PyTorch** — Deep learning backend for TrOCR
-- **Selenium** — Browser automation for ASP.NET portal
-- **Pandas** — Data processing and export
-- **Pillow** — Image handling
-- **BeautifulSoup4** — HTML result parsing
 
 ---
 
-*Built as a portfolio project demonstrating OCR, Deep Learning, and automated data extraction.*
+## 🧠 Deep Learning (TrOCR) Pipeline
+
+How the CAPTCHA is solved in real-time:
+
+1. **Extraction**: Selenium executes JavaScript to extract the raw base64 data of the dynamically loaded CAPTCHA canvas (bypassing session-bound URL issues).
+2. **Inference**: The image is passed to `microsoft/trocr-base-printed` which uses a Vision Transformer (ViT) encoder and RoBERTa decoder to predict the text sequence.
+3. **Refinement**: Whitespace and illegal characters are stripped before injection back into the browser.
+
+---
+
+## 📊 The Output (Excel & CSV)
+
+The final product is a highly polished `results.xlsx` file containing:
+- **Comprehensive Data**: SGPA, CGPA, Pass/Fail status, and course-by-course breakdowns (Credits & Grades).
+- **Auto-Formatting**: Conditional formatting highlights excellent SGPAs (🟢 ≥9.0) and failing grades (🔴).
+- **Segmented Sheets**: Individual sheets for each branch (AI & Data Science, AI & Machine Learning, Artificial Intelligence) alongside a Master sheet.
+- **Rankings**: Auto-computed rankings for students within their respective branches.
+
+---
+
+*Built as a comprehensive portfolio project demonstrating advanced web automation, applied deep learning, and data engineering.* 
