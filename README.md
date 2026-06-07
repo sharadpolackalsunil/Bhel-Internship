@@ -50,19 +50,21 @@ pip install -r requirements.txt
 ```
 *(Note: If you plan on using GPU acceleration for TrOCR, ensure you install the CUDA-compatible version of PyTorch from the [official PyTorch website](https://pytorch.org/).)*
 
-### 4. Run the Pipeline
-The TrOCR model (`microsoft/trocr-base-printed`) will **automatically download** from Hugging Face on the first run. No manual model setup is required!
+## 🚀 Usage
+
+### 1. The Main Scraper (Batch Result Extraction)
+
+Run the main pipeline to scrape all B.Tech AI branch results, process them, and export to Excel:
 
 ```bash
-# Run the full pipeline (scrape all branches and export to Excel/CSV)
+# Run full pipeline (scrape + export)
 python main.py
 
-# Scrape a specific branch
-python main.py --scrape-only --branch BTAD
+# Scrape only
+python main.py --scrape-only
 
-# Run in debug mode (shows the browser window)
+# Scrape with visible browser
 python main.py --scrape-only --no-headless
-
 # Generate Excel/CSV reports from previously scraped data
 python main.py --export-only
 ```

@@ -278,6 +278,14 @@ function openStudentProfile(enrollment) {
       </div>
     </div>
 
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem; padding:1rem; background:rgba(102,126,234,0.05); border-radius:var(--radius-md); border:1px solid rgba(102,126,234,0.15);">
+      <span style="font-size:0.8rem; color:var(--text-muted); display:flex; align-items:center; margin-right:0.5rem;">🌐 MITS Portal:</span>
+      <a href="https://iums.mitsgwalior.in/StudentLife/Student_UploadPhoto.aspx?url=Student%20Profile" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">👤 Student Profile</a>
+      <a href="https://iums.mitsgwalior.in/StudentLife/AcademicHistory.aspx" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">🎓 Academic History</a>
+      <a href="https://iums.mitsgwalior.in/StudentLife/ViewAttendance.aspx" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">📊 Attendance</a>
+      <a href="https://iums.mitsgwalior.in/StudentLife/Studenthome.aspx" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">📚 Services</a>
+    </div>
+
     <div class="profile-section">
       <h3>Personal Information</h3>
       <div class="profile-info-grid">

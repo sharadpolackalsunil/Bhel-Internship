@@ -48,8 +48,9 @@
         <button type="submit" class="btn btn-primary login-btn">Sign In →</button>
       </form>
 
-      <div style="text-align:center; margin-top:1.5rem; font-size:0.8rem; color:var(--text-muted);">
-        Data scraped from <a href="https://iums.mitsgwalior.in" target="_blank" rel="noopener">iums.mitsgwalior.in</a>
+      <div style="text-align:center; margin-top:1.5rem;">
+        <a href="https://iums.mitsgwalior.in/Login/StudentLogin.aspx" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="margin-bottom:0.75rem;">🌐 Open MITS Portal Directly</a>
+        <p style="font-size:0.75rem; color:var(--text-muted);">Use the same credentials to log in to the official MITS IUMS portal</p>
       </div>
     </div>
   </div>
@@ -62,11 +63,29 @@
           <h1>Student Dashboard</h1>
           <p>Semester 4 Results — B.Tech</p>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="studentLogout()">← Logout</button>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <a href="https://iums.mitsgwalior.in/Login/StudentLogin.aspx" target="_blank" rel="noopener" class="btn btn-outline btn-sm">🌐 MITS Portal</a>
+          <button class="btn btn-ghost btn-sm" onclick="studentLogout()">← Logout</button>
+        </div>
       </div>
     </div>
 
     <div class="dashboard-body">
+      <!-- Quick Links to MITS Portal -->
+      <div class="glass-card" style="padding:1.25rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; border-color:rgba(102,126,234,0.2);">
+        <span style="font-size:1.25rem;">🌐</span>
+        <div style="flex:1; min-width:200px;">
+          <div style="font-weight:700; font-size:0.95rem;">MITS IUMS Portal</div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">Access your official portal with the same credentials</div>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <a href="https://iums.mitsgwalior.in/StudentLife/StuInnerHome.aspx" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">📋 Dashboard</a>
+          <a href="https://iums.mitsgwalior.in/StudentLife/Student_UploadPhoto.aspx?url=Student%20Profile" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">👤 Student Profile</a>
+          <a href="https://iums.mitsgwalior.in/StudentLife/Studenthome.aspx" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">📚 Student Services</a>
+          <a href="https://iums.mitsgwalior.in/StudentLife/ViewAttendance.aspx" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">📊 View Attendance</a>
+          <a href="https://iums.mitsgwalior.in/StudentLife/AcademicHistory.aspx" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">🎓 Academic History</a>
+        </div>
+      </div>
       <!-- Profile Card -->
       <div class="glass-card student-profile-card" id="studentProfileCard">
         <div class="student-avatar-lg" id="studentAvatar">S</div>
