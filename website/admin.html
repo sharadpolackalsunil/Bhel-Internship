@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Admin Dashboard — View all student analytics, rankings, SGPA distributions, and individual student profiles.">
+  <title>Admin Dashboard — BHEL Project</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══ Navigation ═══ -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">
+        <span class="logo-icon">🎓</span>
+        BHEL Project
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Portfolio</a></li>
+        <li><a href="student.html">Student</a></li>
+        <li><a href="admin.html" class="active">Admin</a></li>
+      </ul>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">☰</button>
+    </div>
+  </nav>
+
+  <!-- ═══ Admin Login ═══ -->
+  <div class="login-page" id="adminLoginSection">
+    <div class="glass-card login-card">
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <div style="font-size:3rem;">🔐</div>
+      </div>
+      <h2>Admin <span class="gradient-text">Login</span></h2>
+      <p class="login-subtitle">Access the complete student analytics dashboard</p>
+      
+      <form id="adminLoginForm" onsubmit="return handleAdminLogin(event)">
+        <div class="form-group">
+          <label for="adminPasswordInput">Admin Password</label>
+          <input type="password" id="adminPasswordInput" placeholder="Enter admin password" required>
+        </div>
+        <div class="form-error" id="adminLoginError">Incorrect password.</div>
+        <button type="submit" class="btn btn-primary login-btn">Access Dashboard →</button>
+      </form>
+
+      <div style="text-align:center; margin-top:1.5rem; font-size:0.8rem; color:var(--text-muted);">
+        Data from Semester 4 — 210 Students across 3 branches
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Admin Dashboard ═══ -->
+  <div class="dashboard" id="adminDashboard">
+    <div class="dashboard-header">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h1>📊 Admin Dashboard</h1>
+          <p>Complete analytics for Semester 4 — B.Tech AI Branches</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="adminLogout()">← Logout</button>
+      </div>
+    </div>
+
+    <div class="dashboard-body">
+      <!-- Overview Cards -->
+      <div class="overview-grid" id="overviewGrid"></div>
+
+      <!-- Charts -->
+      <div class="charts-grid">
+        <div class="glass-card chart-card">
+          <h3>📊 Avg SGPA by Branch</h3>
+          <div id="branchBarChart" class="bar-chart"></div>
+        </div>
+        <div class="glass-card chart-card">
+          <h3>📈 SGPA Distribution</h3>
+          <div id="sgpaHistogram" class="histogram"></div>
+        </div>
+      </div>
+
+      <!-- Pass/Fail by Branch -->
+      <div class="glass-card" style="padding:1.5rem; margin-bottom:2rem;">
+        <h3 style="font-size:1rem; font-weight:700; margin-bottom:1.25rem;">✅ Pass Rate by Branch</h3>
+        <div id="passRateChart" class="bar-chart"></div>
+      </div>
+
+      <!-- Top Performers -->
+      <div class="glass-card" style="padding:1.5rem; margin-bottom:2rem;">
+        <h3 style="font-size:1rem; font-weight:700; margin-bottom:1.25rem;">🏆 Top 10 Performers</h3>
+        <div class="data-table-wrap">
+          <table class="data-table" id="topPerformersTable">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Enrollment</th>
+                <th>Branch</th>
+                <th>SGPA</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="topPerformersBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- All Students Table -->
+      <div class="glass-card" style="padding:1.5rem;">
+        <h3 style="font-size:1rem; font-weight:700; margin-bottom:1.25rem;">📋 All Students</h3>
+        
+        <div class="table-controls">
+          <div class="search-wrapper">
+            <input type="text" class="search-input" id="studentSearch" placeholder="Search by name or enrollment...">
+          </div>
+          <select class="filter-select" id="branchFilter">
+            <option value="">All Branches</option>
+            <option value="AI_DS">AI & Data Science</option>
+            <option value="AI_ML">AI & Machine Learning</option>
+            <option value="AI">Artificial Intelligence</option>
+          </select>
+          <select class="filter-select" id="statusFilter">
+            <option value="">All Status</option>
+            <option value="PASS">Pass</option>
+            <option value="FAIL">Fail</option>
+          </select>
+        </div>
+
+        <div class="data-table-wrap">
+          <table class="data-table" id="allStudentsTable">
+            <thead>
+              <tr>
+                <th data-sort="rank">Rank <span class="sort-icon">↕</span></th>
+                <th data-sort="name">Name <span class="sort-icon">↕</span></th>
+                <th data-sort="enrollment">Enrollment <span class="sort-icon">↕</span></th>
+                <th data-sort="branchCode">Branch <span class="sort-icon">↕</span></th>
+                <th data-sort="sgpa">SGPA <span class="sort-icon">↕</span></th>
+                <th data-sort="result">Status <span class="sort-icon">↕</span></th>
+                <th>Profile</th>
+              </tr>
+            </thead>
+            <tbody id="allStudentsBody"></tbody>
+          </table>
+        </div>
+        <div id="tableInfo" style="margin-top:1rem; font-size:0.8rem; color:var(--text-muted);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Student Profile Modal ═══ -->
+  <div class="profile-modal" id="profileModal">
+    <div class="glass-card profile-content" id="profileContent"></div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

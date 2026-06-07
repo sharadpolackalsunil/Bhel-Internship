@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Student Portal — View your semester results, SGPA, grades, and rankings.">
+  <title>Student Portal — BHEL Project</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══ Navigation ═══ -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">
+        <span class="logo-icon">🎓</span>
+        BHEL Project
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Portfolio</a></li>
+        <li><a href="student.html" class="active">Student</a></li>
+        <li><a href="admin.html">Admin</a></li>
+      </ul>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">☰</button>
+    </div>
+  </nav>
+
+  <!-- ═══ Login Section ═══ -->
+  <div class="login-page" id="loginSection">
+    <div class="glass-card login-card">
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <div style="font-size:3rem;">🎓</div>
+      </div>
+      <h2>Student <span class="gradient-text">Login</span></h2>
+      <p class="login-subtitle">Enter your MITS portal credentials to view your results</p>
+      
+      <form id="studentLoginForm" onsubmit="return handleStudentLogin(event)">
+        <div class="form-group">
+          <label for="enrollmentInput">Enrollment Number</label>
+          <input type="text" id="enrollmentInput" placeholder="e.g. BTAD24O1063" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label for="passwordInput">Password</label>
+          <input type="password" id="passwordInput" placeholder="Your MITS portal password" autocomplete="current-password" required>
+          <div style="font-size:0.75rem; color:var(--accent-amber); margin-top:0.35rem;">⚠️ password case-sensitive</div>
+        </div>
+        <div class="form-error" id="loginError">Student not found. Please check your enrollment number.</div>
+        <button type="submit" class="btn btn-primary login-btn">Sign In →</button>
+      </form>
+
+      <div style="text-align:center; margin-top:1.5rem; font-size:0.8rem; color:var(--text-muted);">
+        Data scraped from <a href="https://iums.mitsgwalior.in" target="_blank" rel="noopener">iums.mitsgwalior.in</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Student Dashboard ═══ -->
+  <div class="dashboard" id="studentDashboard">
+    <div class="dashboard-header">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h1>Student Dashboard</h1>
+          <p>Semester 4 Results — B.Tech</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="studentLogout()">← Logout</button>
+      </div>
+    </div>
+
+    <div class="dashboard-body">
+      <!-- Profile Card -->
+      <div class="glass-card student-profile-card" id="studentProfileCard">
+        <div class="student-avatar-lg" id="studentAvatar">S</div>
+        <div class="student-details">
+          <h2 id="studentName">—</h2>
+          <div class="student-meta">
+            <div class="meta-item">🆔 <span id="studentEnroll">—</span></div>
+            <div class="meta-item">🎓 <span id="studentBranch">—</span></div>
+            <div class="meta-item">📅 Semester <span id="studentSem">4</span></div>
+            <div class="meta-item" id="studentStatusBadge"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Stats -->
+      <div class="student-result-cards" id="studentResultCards">
+        <div class="glass-card stat-card">
+          <div class="stat-value" id="studentSGPA">—</div>
+          <div class="stat-label">SGPA</div>
+        </div>
+        <div class="glass-card stat-card">
+          <div class="stat-value" id="studentCGPA" style="-webkit-text-fill-color: var(--accent-emerald);">—</div>
+          <div class="stat-label">CGPA</div>
+        </div>
+        <div class="glass-card stat-card">
+          <div class="stat-value" id="studentRank" style="-webkit-text-fill-color: var(--accent-cyan);">—</div>
+          <div class="stat-label">Overall Rank</div>
+        </div>
+        <div class="glass-card stat-card">
+          <div class="stat-value" id="studentBranchRank" style="-webkit-text-fill-color: var(--accent-amber);">—</div>
+          <div class="stat-label">Branch Rank</div>
+        </div>
+      </div>
+
+      <!-- Grade Distribution Chart -->
+      <div class="glass-card" style="padding:1.5rem; margin-bottom:1.5rem;">
+        <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:1rem;">📊 Grade Distribution</h3>
+        <div id="studentGradeChart" style="display:flex; gap:0.5rem; align-items:flex-end; height:150px; padding:0 1rem;"></div>
+      </div>
+
+      <!-- Subjects Table -->
+      <div class="glass-card student-grade-table">
+        <h3>📋 Subject-wise Grades</h3>
+        <div class="data-table-wrap">
+          <table class="data-table" id="studentSubjectsTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Course Code</th>
+                <th>Type</th>
+                <th>Total Credit</th>
+                <th>Earned Credit</th>
+                <th>Grade</th>
+              </tr>
+            </thead>
+            <tbody id="studentSubjectsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+  <script src="student.js"></script>
+</body>
+</html>

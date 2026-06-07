@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="MITS Gwalior Automated Result Extraction System — BHEL Internship Portfolio Project combining Selenium automation, TrOCR deep learning, and data engineering.">
+  <title>BHEL Internship — MITS Result Extraction System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══ Navigation ═══ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">
+        <span class="logo-icon">🎓</span>
+        BHEL Project
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#about">About</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#portal">Portal</a></li>
+        <li><a href="#challenges">Challenges</a></li>
+        <li><a href="#academics">Academics</a></li>
+        <li><a href="#techstack">Tech Stack</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="student.html" class="btn btn-outline btn-sm">Student Portal</a>
+        <a href="admin.html" class="btn btn-primary btn-sm">Admin Dashboard</a>
+      </div>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">☰</button>
+    </div>
+  </nav>
+
+  <!-- ═══ Hero ═══ -->
+  <section class="hero" id="hero">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span>🏛️</span> BHEL Internship Project — MITS Gwalior
+      </div>
+      <h1 class="hero-title">
+        Automated <span class="gradient-text">Result Extraction</span><br>
+        with Deep Learning
+      </h1>
+      <p class="hero-subtitle">
+        An end-to-end pipeline integrating Transformer-based OCR and browser automation
+        to systematically scrape, solve CAPTCHAs, and extract structured university data.
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="value" data-count="210">0</div>
+          <div class="label">Students Scraped</div>
+        </div>
+        <div class="hero-stat">
+          <div class="value" data-count="3">0</div>
+          <div class="label">AI Branches</div>
+        </div>
+        <div class="hero-stat">
+          <div class="value" data-count="99" data-suffix="%">0</div>
+          <div class="label">CAPTCHA Accuracy</div>
+        </div>
+        <div class="hero-stat">
+          <div class="value" data-count="14">0</div>
+          <div class="label">Courses Extracted</div>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <a href="student.html" class="btn btn-primary btn-lg">🎓 Student Portal</a>
+        <a href="admin.html" class="btn btn-outline btn-lg">📊 Admin Dashboard</a>
+        <a href="#about" class="btn btn-ghost btn-lg">Learn More ↓</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ About ═══ -->
+  <section class="section" id="about">
+    <div class="section-container">
+      <div class="section-header animate-on-scroll">
+        <div class="section-label">⚡ Project Overview</div>
+        <h2 class="section-title">Why This Project <span class="gradient-text">Stands Out</span></h2>
+        <p class="section-desc">
+          University portals are notoriously difficult to scrape. This project solves complex engineering challenges with cutting-edge techniques.
+        </p>
+      </div>
+      <div class="about-grid">
+        <div class="glass-card about-card animate-on-scroll stagger-1">
+          <div class="card-icon blue">🕸️</div>
+          <h3>Web Automation</h3>
+          <p>Selenium WebDriver handles ASP.NET ViewState, dynamic PostBacks, JavaScript radio buttons, and session-bound dropdowns that break traditional HTTP scrapers.</p>
+        </div>
+        <div class="glass-card about-card animate-on-scroll stagger-2">
+          <div class="card-icon violet">🧠</div>
+          <h3>Deep Learning OCR</h3>
+          <p>Microsoft's TrOCR (Vision Transformer + RoBERTa decoder) achieves ~99% accuracy on distorted CAPTCHAs — no manual labeling, no custom CNN training required.</p>
+        </div>
+        <div class="glass-card about-card animate-on-scroll stagger-3">
+          <div class="card-icon cyan">📊</div>
+          <h3>Data Engineering</h3>
+          <p>Pandas-based processor automatically flattens nested HTML tables, handles missing data, generates grade columns dynamically, and exports formatted Excel workbooks.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Architecture ═══ -->
+  <section class="section" id="architecture" style="background: var(--bg-secondary);">
+    <div class="section-container">
+      <div class="section-header animate-on-scroll">
+        <div class="section-label">🏗️ System Design</div>
+        <h2 class="section-title">Pipeline <span class="gradient-text">Architecture</span></h2>
+        <p class="section-desc">How data flows from the university portal to the final Excel report.</p>
+      </div>
+      <div class="pipeline-flow" id="pipelineFlow">
+        <div class="pipeline-step" data-delay="0">
+          <div class="step-icon">🌐</div>
+          <div class="step-label">MITS Portal</div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step" data-delay="100">
+          <div class="step-icon">🤖</div>
+          <div class="step-label">Selenium</div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step" data-delay="200">
+          <div class="step-icon">🔒</div>
+          <div class="step-label">CAPTCHA</div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step" data-delay="300">
+          <div class="step-icon">🧠</div>
+          <div class="step-label">TrOCR</div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step" data-delay="400">
+          <div class="step-icon">🔍</div>
+          <div class="step-label">Parse HTML</div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step" data-delay="500">
+          <div class="step-icon">🐼</div>
+          <div class="step-label">Pandas</div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step" data-delay="600">
+          <div class="step-icon">📊</div>
+          <div class="step-label">Excel/CSV</div>
+        </div>
+      </div>
+
+      <!-- Code Snippet -->
+      <div class="animate-on-scroll" style="max-width:800px; margin:2rem auto 0;">
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="filename">captcha_model/predict.py</span>
+            <span class="lang-badge">Python</span>
+          </div>
+          <pre><code><span class="comment"># TrOCR CAPTCHA Solving Pipeline</span>
+<span class="keyword">class</span> <span class="function">CaptchaSolver</span>:
+    <span class="keyword">def</span> <span class="function">solve</span>(self, image_input):
+        image = image_input.convert(<span class="string">"RGB"</span>)
+        pixel_values = self.processor(image, return_tensors=<span class="string">"pt"</span>)
+        
+        <span class="keyword">with</span> torch.no_grad():
+            generated_ids = self.model.generate(pixel_values)
+        
+        text = self.processor.batch_decode(generated_ids)[<span class="number">0</span>]
+        <span class="keyword">return</span> <span class="string">""</span>.join(text.split()), <span class="number">0.99</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Target Portal Gallery ═══ -->
+  <section class="section" id="portal">
+    <div class="section-container">
+      <div class="section-header animate-on-scroll">
+        <div class="section-label">🖥️ The Target</div>
+        <h2 class="section-title">MITS IUMS <span class="gradient-text">Portal</span></h2>
+        <p class="section-desc">Screenshots of the university portal that our scraper automates — from login to result extraction.</p>
+      </div>
+      <div class="gallery-container glass-card animate-on-scroll" id="gallery">
+        <div class="gallery-track" id="galleryTrack">
+          <div class="gallery-slide">
+            <img src="images/portal_1_home.svg" alt="MITS IUMS Homepage" loading="lazy">
+            <div class="slide-caption">
+              <h4>1. IUMS Portal Homepage</h4>
+              <p>The entry point with Student Login, Sign Up, and Employee Login options. Our scraper navigates here first.</p>
+            </div>
+          </div>
+          <div class="gallery-slide">
+            <img src="images/portal_2_login.svg" alt="Student Login Page" loading="lazy">
+            <div class="slide-caption">
+              <h4>2. Student Login (CAPTCHA Challenge)</h4>
+              <p>The login page with username, password, and CAPTCHA verification. Our TrOCR model solves the CAPTCHA with ~99% accuracy.</p>
+            </div>
+          </div>
+          <div class="gallery-slide">
+            <img src="images/portal_3_dashboard.svg" alt="Student Dashboard" loading="lazy">
+            <div class="slide-caption">
+              <h4>3. Student Dashboard</h4>
+              <p>After login, the student dashboard shows announcements and provides access to Student Services.</p>
+            </div>
+          </div>
+          <div class="gallery-slide">
+            <img src="images/portal_4_sidebar.svg" alt="Student Services Sidebar" loading="lazy">
+            <div class="slide-caption">
+              <h4>4. Student Services Menu</h4>
+              <p>The sidebar navigation includes Course Registration, Semester Fees, Student Profile, View Marks, and Reports.</p>
+            </div>
+          </div>
+          <div class="gallery-slide">
+            <img src="images/portal_5_profile.svg" alt="Student Profile" loading="lazy">
+            <div class="slide-caption">
+              <h4>5. Student Profile</h4>
+              <p>Personal information including name, parent names, gender, and date of birth. Our scraper extracts result data from the academic section.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="gallery-nav">
+        <button class="gallery-btn" id="galleryPrev" aria-label="Previous">‹</button>
+        <div class="gallery-dots" id="galleryDots"></div>
+        <button class="gallery-btn" id="galleryNext" aria-label="Next">›</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Challenges ═══ -->
+  <section class="section" id="challenges" style="background: var(--bg-secondary);">
+    <div class="section-container">
+      <div class="section-header animate-on-scroll">
+        <div class="section-label">🛑 Engineering Challenges</div>
+        <h2 class="section-title">Problems We <span class="gradient-text">Solved</span></h2>
+        <p class="section-desc">Building this system required overcoming 4 critical engineering challenges.</p>
+      </div>
+      <div class="challenges-list">
+
+        <div class="glass-card challenge-item animate-on-scroll stagger-1">
+          <button class="challenge-header" onclick="toggleChallenge(this)">
+            <span class="challenge-number">1</span>
+            <span class="challenge-title">Low CAPTCHA Accuracy (~10-20%)</span>
+            <span class="challenge-toggle">▼</span>
+          </button>
+          <div class="challenge-body">
+            <div class="challenge-body-inner">
+              <div class="problem">
+                <span class="tag problem-tag">Problem</span>
+                <p>Custom-trained CNN had only 10-20% accuracy on the portal's highly distorted and noisy CAPTCHAs, causing constant scraper failures.</p>
+              </div>
+              <div class="solution">
+                <span class="tag solution-tag">Solution</span>
+                <p>Replaced CNN with Microsoft's <strong>TrOCR (Transformer-based OCR)</strong> — a Vision-Encoder-Decoder architecture pre-trained on millions of printed text images. Accuracy jumped to ~99% instantly.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card challenge-item animate-on-scroll stagger-2">
+          <button class="challenge-header" onclick="toggleChallenge(this)">
+            <span class="challenge-number">2</span>
+            <span class="challenge-title">"Ghost" CAPTCHA Failures (Session State)</span>
+            <span class="challenge-toggle">▼</span>
+          </button>
+          <div class="challenge-body">
+            <div class="challenge-body-inner">
+              <div class="problem">
+                <span class="tag problem-tag">Problem</span>
+                <p>Even with 100% correct TrOCR predictions, the portal kept rejecting CAPTCHAs. The server said "incorrect" despite our text being right.</p>
+              </div>
+              <div class="solution">
+                <span class="tag solution-tag">Solution</span>
+                <p>ASP.NET uses hidden <strong>__VIEWSTATE</strong> variables. Our scraper was bypassing the program selection page, creating an invalid session. Fixed by navigating through <code>ProgramSelect.aspx</code> → clicking B.Tech radio → selecting semester → injecting JavaScript to force-reload the CAPTCHA with a unique timestamp to bust the browser cache.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card challenge-item animate-on-scroll stagger-3">
+          <button class="challenge-header" onclick="toggleChallenge(this)">
+            <span class="challenge-number">3</span>
+            <span class="challenge-title">Messy Data Extraction</span>
+            <span class="challenge-toggle">▼</span>
+          </button>
+          <div class="challenge-body">
+            <div class="challenge-body-inner">
+              <div class="problem">
+                <span class="tag problem-tag">Problem</span>
+                <p>The exported CSV was a mess — generic text in the Program column, missed SGPA entirely, and all subjects lumped into generic Subj_1 columns.</p>
+              </div>
+              <div class="solution">
+                <span class="tag solution-tag">Solution</span>
+                <p>Analyzed the exact DOM structure and rewrote <code>parse_result_page()</code> with BeautifulSoup. Targeted specific ASP.NET <code>lbl</code> IDs for header info, accurately extracted the Grades table with Course Codes/Credits/Grades, and targeted the Footer table for SGPA/CGPA/Pass-Fail status.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card challenge-item animate-on-scroll stagger-4">
+          <button class="challenge-header" onclick="toggleChallenge(this)">
+            <span class="challenge-number">4</span>
+            <span class="challenge-title">1.3GB Git Push Failure</span>
+            <span class="challenge-toggle">▼</span>
+          </button>
+          <div class="challenge-body">
+            <div class="challenge-body-inner">
+              <div class="problem">
+                <span class="tag problem-tag">Problem</span>
+                <p>The <code>git push</code> command failed completely when trying to push the finished project to GitHub.</p>
+              </div>
+              <div class="solution">
+                <span class="tag solution-tag">Solution</span>
+                <p>The TrOCR model file (<code>model.safetensors</code>) was 1.33 GB — far exceeding GitHub's 100 MB limit. Performed <code>git reset</code> to undo commits, added the model directory to <code>.gitignore</code>, and recreated the commit cleanly.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Academics ═══ -->
+  <section class="section" id="academics">
+    <div class="section-container">
+      <div class="section-header animate-on-scroll">
+        <div class="section-label">📚 Academic History</div>
+        <h2 class="section-title">My <span class="gradient-text">Academic</span> Performance</h2>
+        <p class="section-desc">Semester-wise grades, CGPA progression, and rankings at MITS Gwalior.</p>
+      </div>
+
+      <!-- Overall Summary -->
+      <div class="academics-overview animate-on-scroll">
+        <div class="glass-card academics-cgpa-card">
+          <div class="stat-label" style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.5rem;">Overall CGPA</div>
+          <div><span class="cgpa-value">7.77</span><span class="cgpa-max"> /10</span></div>
+          <div class="cgpa-desc">Sem 4 cumulative (from TR)</div>
+        </div>
+        <div class="glass-card rank-card">
+          <div class="rank-label">Branch Rank</div>
+          <div class="rank-value">23rd</div>
+          <div class="rank-total">of 80</div>
+        </div>
+        <div class="glass-card rank-card">
+          <div class="rank-label">Dept Rank</div>
+          <div class="rank-value">83rd</div>
+          <div class="rank-total">of 308</div>
+        </div>
+        <div class="glass-card rank-card">
+          <div class="rank-label">Institute Rank</div>
+          <div class="rank-value">395th</div>
+          <div class="rank-total">of 1522</div>
+        </div>
+      </div>
+
+      <!-- SGPA/CGPA Trend Chart -->
+      <div class="glass-card trend-chart-container animate-on-scroll">
+        <h3>📊 SGPA & CGPA Trend</h3>
+        <div class="chart-canvas-wrap">
+          <canvas id="trendChart"></canvas>
+        </div>
+        <div class="chart-legend">
+          <div class="chart-legend-item">
+            <div class="chart-legend-dot" style="background: var(--accent-blue);"></div>
+            CGPA
+          </div>
+          <div class="chart-legend-item">
+            <div class="chart-legend-dot" style="background: var(--accent-emerald);"></div>
+            SGPA
+          </div>
+        </div>
+      </div>
+
+      <!-- Semester Cards -->
+      <div class="section-header animate-on-scroll" style="margin-bottom:1.5rem;">
+        <h3 style="font-size:1.25rem; font-weight:700;">Semester-wise Performance</h3>
+        <p style="color:var(--text-muted); font-size:0.85rem;">SGPA, CGPA and rankings · latest semester first</p>
+      </div>
+      <div class="semester-cards">
+        <div class="glass-card semester-card animate-on-scroll stagger-1">
+          <div class="semester-num">4</div>
+          <div class="semester-info">
+            <h4>Semester 4</h4>
+            <span class="sem-period">January–June 2026</span>
+            <span class="pass-badge pass" style="margin-left:0.5rem;">Pass</span>
+          </div>
+          <div class="semester-grades">
+            <div class="grade-item"><div class="grade-label">SGPA</div><div class="grade-value sgpa-color">8.22</div></div>
+            <div class="grade-item"><div class="grade-label">CGPA</div><div class="grade-value cgpa-color">7.77</div></div>
+          </div>
+          <div class="semester-ranks">
+            <div class="semester-rank"><div class="rank-type">Branch</div><div class="rank-val">13th</div></div>
+            <div class="semester-rank"><div class="rank-type">Dept</div><div class="rank-val">57th</div></div>
+            <div class="semester-rank"><div class="rank-type">Institute</div><div class="rank-val">278th</div></div>
+          </div>
+        </div>
+
+        <div class="glass-card semester-card animate-on-scroll stagger-2">
+          <div class="semester-num">3</div>
+          <div class="semester-info">
+            <h4>Semester 3</h4>
+            <span class="sem-period">July–December 2025</span>
+            <span class="pass-badge pass" style="margin-left:0.5rem;">Pass</span>
+          </div>
+          <div class="semester-grades">
+            <div class="grade-item"><div class="grade-label">SGPA</div><div class="grade-value sgpa-color">7.73</div></div>
+            <div class="grade-item"><div class="grade-label">CGPA</div><div class="grade-value cgpa-color">7.61</div></div>
+          </div>
+          <div class="semester-ranks">
+            <div class="semester-rank"><div class="rank-type">Branch</div><div class="rank-val">26th</div></div>
+            <div class="semester-rank"><div class="rank-type">Dept</div><div class="rank-val">95th</div></div>
+            <div class="semester-rank"><div class="rank-type">Institute</div><div class="rank-val">497th</div></div>
+          </div>
+        </div>
+
+        <div class="glass-card semester-card animate-on-scroll stagger-3">
+          <div class="semester-num">2</div>
+          <div class="semester-info">
+            <h4>Semester 2</h4>
+            <span class="sem-period">January–June 2025</span>
+            <span class="pass-badge pass" style="margin-left:0.5rem;">Pass</span>
+          </div>
+          <div class="semester-grades">
+            <div class="grade-item"><div class="grade-label">SGPA</div><div class="grade-value sgpa-color">7.55</div></div>
+            <div class="grade-item"><div class="grade-label">CGPA</div><div class="grade-value cgpa-color">7.55</div></div>
+          </div>
+          <div class="semester-ranks">
+            <div class="semester-rank"><div class="rank-type">Branch</div><div class="rank-val">27th</div></div>
+            <div class="semester-rank"><div class="rank-type">Dept</div><div class="rank-val">104th</div></div>
+            <div class="semester-rank"><div class="rank-type">Institute</div><div class="rank-val">531st</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Tech Stack ═══ -->
+  <section class="section" id="techstack" style="background: var(--bg-secondary);">
+    <div class="section-container">
+      <div class="section-header animate-on-scroll">
+        <div class="section-label">🛠️ Technologies</div>
+        <h2 class="section-title">Tech <span class="gradient-text">Stack</span></h2>
+      </div>
+      <div class="tech-grid">
+        <div class="glass-card tech-badge animate-on-scroll stagger-1"><span class="tech-icon">🐍</span><div class="tech-name">Python</div><div class="tech-desc">Core Language</div></div>
+        <div class="glass-card tech-badge animate-on-scroll stagger-2"><span class="tech-icon">🤖</span><div class="tech-name">Selenium</div><div class="tech-desc">Browser Automation</div></div>
+        <div class="glass-card tech-badge animate-on-scroll stagger-3"><span class="tech-icon">🧠</span><div class="tech-name">TrOCR</div><div class="tech-desc">CAPTCHA Solving</div></div>
+        <div class="glass-card tech-badge animate-on-scroll stagger-4"><span class="tech-icon">🔥</span><div class="tech-name">PyTorch</div><div class="tech-desc">Deep Learning</div></div>
+        <div class="glass-card tech-badge animate-on-scroll stagger-1"><span class="tech-icon">🤗</span><div class="tech-name">Transformers</div><div class="tech-desc">HuggingFace</div></div>
+        <div class="glass-card tech-badge animate-on-scroll stagger-2"><span class="tech-icon">🍲</span><div class="tech-name">BeautifulSoup</div><div class="tech-desc">HTML Parsing</div></div>
+        <div class="glass-card tech-badge animate-on-scroll stagger-3"><span class="tech-icon">🐼</span><div class="tech-name">Pandas</div><div class="tech-desc">Data Processing</div></div>
+        <div class="glass-card tech-badge animate-on-scroll stagger-4"><span class="tech-icon">📊</span><div class="tech-name">openpyxl</div><div class="tech-desc">Excel Export</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Code Highlights ═══ -->
+  <section class="section" id="code">
+    <div class="section-container">
+      <div class="section-header animate-on-scroll">
+        <div class="section-label">💻 Key Code</div>
+        <h2 class="section-title">Code <span class="gradient-text">Highlights</span></h2>
+      </div>
+
+      <div class="animate-on-scroll" style="max-width:850px; margin:0 auto;">
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="filename">scraper/scraper.py — ASP.NET Session Fix</span>
+            <span class="lang-badge">Python</span>
+          </div>
+          <pre><code><span class="comment"># CRITICAL: Force CAPTCHA image to reload after PostBack</span>
+<span class="comment"># The semester dropdown generates a new CAPTCHA on the server,</span>
+<span class="comment"># but the browser caches the old image since URL doesn't change.</span>
+
+driver.execute_script(
+    <span class="string">"arguments[0].src = arguments[0].src + '&t=' + "</span>
+    <span class="string">"new Date().getTime();"</span>,
+    captcha_element
+)
+<span class="comment"># This cache-busting timestamp ensures the browser fetches</span>
+<span class="comment"># the fresh CAPTCHA that matches the server's session state.</span></code></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="filename">scraper/scraper.py — DOM-targeted Parsing</span>
+            <span class="lang-badge">Python</span>
+          </div>
+          <pre><code><span class="keyword">def</span> <span class="function">parse_result_page</span>(driver):
+    soup = BeautifulSoup(driver.page_source, <span class="string">'html.parser'</span>)
+    
+    <span class="comment"># Extract via specific ASP.NET label IDs</span>
+    <span class="keyword">for</span> s <span class="keyword">in</span> soup.find_all(<span class="string">"span"</span>):
+        id_attr = s.get(<span class="string">"id"</span>, <span class="string">""</span>).lower()
+        <span class="keyword">if</span> <span class="string">"lblname"</span> <span class="keyword">in</span> id_attr:
+            result_data[<span class="string">'student_name'</span>] = s.get_text(strip=<span class="keyword">True</span>)
+    
+    <span class="comment"># Target Grades table: Course Code → Credits → Grade</span>
+    <span class="keyword">if</span> <span class="string">"course code"</span> <span class="keyword">in</span> headers:
+        subjects.append({<span class="string">'course_code'</span>: cells[<span class="number">0</span>], ...})</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p>🎓 MITS Gwalior Result Extraction System — BHEL Internship Project</p>
+      <p style="margin-top:0.5rem;">Built with Python, Selenium, TrOCR & ❤️</p>
+      <div style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
+        <a href="student.html" class="btn btn-ghost btn-sm">Student Portal</a>
+        <a href="admin.html" class="btn btn-ghost btn-sm">Admin Dashboard</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

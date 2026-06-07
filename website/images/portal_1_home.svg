@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="576" viewBox="0 0 1024 576">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a365d;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#0a0e1a;stop-opacity:1"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="576" fill="url(#bg)"/>
+  <rect x="40" y="40" width="944" height="496" rx="12" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="512" y="260" text-anchor="middle" fill="white" font-family="Inter, sans-serif" font-size="28" font-weight="700">IUMS Portal Homepage</text>
+  <text x="512" y="300" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="Inter, sans-serif" font-size="16">Student Login · Sign Up · Employee Login</text>
+  <text x="512" y="360" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-family="Inter, sans-serif" font-size="13">Replace with actual screenshot: images/portal_1_home.png</text>
+</svg>
