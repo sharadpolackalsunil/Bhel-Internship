@@ -5,29 +5,78 @@
 
 let currentStudent = null;
 
-function handleStudentLogin(e) {
-  e.preventDefault();
+async function studentLogin(event) {
+  event.preventDefault();
   const enrollment = document.getElementById('enrollmentInput').value.trim().toUpperCase();
-  const errorEl = document.getElementById('loginError');
+  const password = document.getElementById('passwordInput').value.trim();
 
-  // Find student in data
-  const student = STUDENTS.find(s => s.enrollment === enrollment);
+  // First verify they exist in our Semester 4 dataset
+  const baseStudent = STUDENTS.find(s => s.enrollment === enrollment);
+  
+  const loginBtn = document.getElementById('loginBtn');
+  const loginLoading = document.getElementById('loginLoading');
+  const loginErrorMsg = document.getElementById('loginErrorMsg');
 
-  if (!student) {
-    errorEl.classList.add('show');
-    errorEl.textContent = 'Student not found. Please check your enrollment number.';
-    return false;
+  // Show loading
+  loginBtn.style.display = 'none';
+  loginLoading.style.display = 'block';
+  loginErrorMsg.style.display = 'none';
+
+  try {
+    // Authenticate and fetch live profile via our FastAPI backend
+    const response = await fetch('http://localhost:8000/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enrollment, password })
+    });
+
+    if (!response.ok) {
+      throw new Error("Invalid credentials or CAPTCHA failed.");
+    }
+
+    const result = await response.json();
+    const liveProfile = result.data;
+
+    // Merge the live profile with the semester 4 results
+    const student = baseStudent ? { ...baseStudent, ...liveProfile } : liveProfile;
+
+    // Store in localStorage
+    localStorage.setItem('studentAuth', JSON.stringify(student));
+
+    // Transition UI
+    document.getElementById('loginSection').style.display = 'none';
+    const dashboard = document.getElementById('studentDashboard');
+    dashboard.classList.add('active');
+    dashboard.style.display = 'block';
+
+    // Reset loading state for future logouts
+    loginBtn.style.display = 'inline-block';
+    loginLoading.style.display = 'none';
+
+    // Render the dashboard
+    renderStudentDashboard(student);
+    
+    // Render live personal details
+    if (student.father_name) {
+       document.getElementById('profileFather').textContent = student.father_name;
+       document.getElementById('profileMother').textContent = student.mother_name;
+       document.getElementById('profileDob').textContent = student.dob;
+       document.getElementById('profileMobile').textContent = student.mobile;
+       document.getElementById('profileEmail').textContent = student.email;
+       document.getElementById('profileAddress').textContent = student.address;
+       document.getElementById('profileGender').textContent = student.gender;
+       document.getElementById('profileBlood').textContent = student.blood_group;
+       document.getElementById('profileSection').style.display = 'block';
+    }
+
+    animateDashboardElements();
+  } catch (error) {
+    console.error("Login error:", error);
+    loginErrorMsg.style.display = 'block';
+    loginErrorMsg.textContent = error.message;
+    loginBtn.style.display = 'inline-block';
+    loginLoading.style.display = 'none';
   }
-
-  // Student found — store and show dashboard
-  currentStudent = student;
-  errorEl.classList.remove('show');
-  
-  document.getElementById('loginSection').style.display = 'none';
-  document.getElementById('studentDashboard').classList.add('active');
-  
-  renderStudentDashboard(student);
-  return false;
 }
 
 function studentLogout() {

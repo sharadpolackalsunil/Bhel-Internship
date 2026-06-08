@@ -34,7 +34,7 @@
       <h2>Student <span class="gradient-text">Login</span></h2>
       <p class="login-subtitle">Enter your MITS portal credentials to view your results</p>
       
-      <form id="studentLoginForm" onsubmit="return handleStudentLogin(event)">
+      <form id="studentLoginForm" onsubmit="studentLogin(event)">
         <div class="form-group">
           <label for="enrollmentInput">Enrollment Number</label>
           <input type="text" id="enrollmentInput" placeholder="e.g. BTAD24O1063" autocomplete="username" required>
@@ -44,9 +44,18 @@
           <input type="password" id="passwordInput" placeholder="Your MITS portal password" autocomplete="current-password" required>
           <div style="font-size:0.75rem; color:var(--accent-amber); margin-top:0.35rem;">⚠️ password case-sensitive</div>
         </div>
-        <div class="form-error" id="loginError">Student not found. Please check your enrollment number.</div>
-        <button type="submit" class="btn btn-primary login-btn">Sign In →</button>
+        <div class="form-error" id="loginErrorMsg" style="display:none; text-align:center; margin-top:1rem;">
+          Invalid credentials or MITS Portal is down.
+        </div>
+        <button type="submit" class="btn btn-primary login-btn" id="loginBtn">Sign In →</button>
       </form>
+
+      <!-- Loading State -->
+      <div id="loginLoading" style="display:none; text-align:center; margin-top:1.5rem; padding:1rem; background:rgba(102,126,234,0.05); border-radius:var(--radius-md); border:1px solid rgba(102,126,234,0.15);">
+        <div class="loader" style="width:30px; height:30px; border:3px solid rgba(102,126,234,0.3); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 10px auto;"></div>
+        <div style="font-weight:600; color:var(--primary); font-size:0.95rem;">Scraping MITS Portal...</div>
+        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:5px;">This takes 10-20 seconds to boot the browser, solve the CAPTCHA, and fetch your profile securely.</div>
+      </div>
 
       <div style="text-align:center; margin-top:1.5rem;">
         <a href="https://iums.mitsgwalior.in/Login/StudentLogin.aspx" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="margin-bottom:0.75rem;">🌐 Open MITS Portal Directly</a>
@@ -97,6 +106,21 @@
             <div class="meta-item">📅 Semester <span id="studentSem">4</span></div>
             <div class="meta-item" id="studentStatusBadge"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- Personal Details (Live from Portal) -->
+      <div class="glass-card" id="profileSection" style="display:none; padding:1.5rem; margin-bottom:1.5rem;">
+        <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:var(--primary);">👤 Personal Details <span style="font-size:0.75rem; font-weight:400; color:var(--accent-emerald); background:rgba(16,185,129,0.1); padding:0.2rem 0.5rem; border-radius:1rem; margin-left:0.5rem;">● Live Data</span></h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; font-size:0.9rem;">
+          <div><span style="color:var(--text-muted);">Father's Name:</span> <div style="font-weight:600;" id="profileFather">—</div></div>
+          <div><span style="color:var(--text-muted);">Mother's Name:</span> <div style="font-weight:600;" id="profileMother">—</div></div>
+          <div><span style="color:var(--text-muted);">Date of Birth:</span> <div style="font-weight:600;" id="profileDob">—</div></div>
+          <div><span style="color:var(--text-muted);">Mobile:</span> <div style="font-weight:600;" id="profileMobile">—</div></div>
+          <div><span style="color:var(--text-muted);">Email:</span> <div style="font-weight:600; word-break:break-all;" id="profileEmail">—</div></div>
+          <div><span style="color:var(--text-muted);">Gender:</span> <div style="font-weight:600;" id="profileGender">—</div></div>
+          <div><span style="color:var(--text-muted);">Blood Group:</span> <div style="font-weight:600;" id="profileBlood">—</div></div>
+          <div style="grid-column:1/-1;"><span style="color:var(--text-muted);">Address:</span> <div style="font-weight:600;" id="profileAddress">—</div></div>
         </div>
       </div>
 
