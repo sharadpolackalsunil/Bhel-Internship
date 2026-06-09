@@ -113,4 +113,4 @@ The React dashboard visualizes the extracted data into actionable insights:
 
 ---
 
-*Built as a comprehensive portfolio project demonstrating advanced web automation, applied deep learning, data engineering, and modern full-stack web development.* 
+*Built as a comprehensive project demonstrating advanced web automation, applied deep learning, data engineering, and modern full-stack web development.* 

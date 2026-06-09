@@ -110,7 +110,7 @@ Examples:
     args = parser.parse_args()
 
     print("=" * 60)
-    print("  MITS Gwalior Result Scraper  Portfolio Project")
+    print("  MITS Gwalior Result Scraper  Project")
     print("  OCR (TrOCR) + Automated Data Extraction")
     print("=" * 60)
 
