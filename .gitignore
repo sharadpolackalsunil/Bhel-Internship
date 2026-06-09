@@ -28,8 +28,8 @@ captcha_model/trocr_model/
 
 # Scraped data & outputs
 data/raw/
-# data/results.csv
-# data/results.xlsx
+data/*.csv
+data/*.xlsx
 data/demo_captchas/
 data/sample_captcha.png
 scraper/captcha_images/
