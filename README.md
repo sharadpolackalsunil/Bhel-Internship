@@ -1,6 +1,6 @@
-# 🎓 MITS Gwalior Automated Result Extraction System (with Deep Learning)
+# 🎓 MITS Gwalior Automated Extraction & Analytics Dashboard
 
-> **An end-to-end automated pipeline integrating Transformers-based Deep Learning (TrOCR) and Browser Automation to systematically bypass ASP.NET challenges, solve CAPTCHAs, and extract structured university data.**
+> **An end-to-end full-stack pipeline integrating Transformers-based Deep Learning (TrOCR), Browser Automation, a FastAPI backend, and a modern React dashboard to systematically extract, process, and visualize structured university data.**
 
 ---
 
@@ -9,109 +9,108 @@
 This isn't just a simple web scraper. University portals are notoriously difficult to scrape reliably due to strict security measures and outdated architectures. Here is how this project solves these complex engineering challenges:
 
 1. **Defeating ASP.NET ViewState & PostBacks:**
-   The MITS portal relies heavily on `ASP.NET` ViewState and dynamic PostBacks which break traditional HTTP request scrapers (like `requests` + `BeautifulSoup`). This project employs **Selenium WebDriver** to mimic a real browser, properly initializing ASP.NET sessions, selecting the correct radio buttons, and triggering necessary server PostBacks.
+   The MITS portal relies heavily on `ASP.NET` ViewState and dynamic PostBacks which break traditional HTTP request scrapers. This project employs **Selenium WebDriver** to mimic a real browser, properly initializing ASP.NET sessions, selecting correct radio buttons, and triggering necessary server PostBacks.
    
 2. **State-of-the-Art CAPTCHA Solving (No Manual Labeling):**
-   Instead of relying on fragile OCR tools like Tesseract or building a basic CNN from scratch, this project implements **Microsoft's TrOCR (Transformer-based Optical Character Recognition)**. TrOCR achieves near **99% accuracy** on printed CAPTCHAs by framing text recognition as an image-to-text sequence generation problem, completely bypassing the need to manually label datasets and train custom CNNs.
+   Instead of relying on fragile OCR tools like Tesseract, this project implements **Microsoft's TrOCR (Transformer-based Optical Character Recognition)**. TrOCR achieves near **99% accuracy** on printed CAPTCHAs by framing text recognition as an image-to-text sequence generation problem.
 
-3. **Dynamic Data Wrangling:**
-   Extracting data from nested, dynamically structured HTML tables is messy. The `Pandas`-based processor automatically flattens these tables, handles missing courses, dynamically generates grade columns, and computes rankings before exporting to a highly formatted Excel workbook.
+3. **Comprehensive Data Extraction:**
+   The scraper navigates through complex multi-page workflows to extract:
+   - **Personal Profiles**: Demographics, contact info, and addresses.
+   - **Academic History**: Semester-by-semester SGPA and final CGPA.
+   - **Fee Status**: Payment dates, amounts, and statuses.
+   - **Result Sheets**: Course-by-course breakdowns and pass/fail statuses.
 
-4. **Production-Ready Resiliency:**
-   Built for long-running stability:
-   - **Checkpoints:** Automatically saves progress to disk every 10 records.
-   - **Rate Limiting:** Implements randomized 2-4 second delays to prevent server bans.
-   - **Retry Logic:** Auto-detects wrong CAPTCHAs and seamlessly reloads the image (forcing a cache-busting refresh) to retry up to 5 times.
+4. **Modern Analytics Dashboard:**
+   A stunning, interactive frontend built with **React and Recharts**, powered by a high-performance **FastAPI** backend. It features statistical visualizer cards, dynamic charts, student rankings, and incredibly detailed individual student profiles tracking academic growth trajectories.
 
 ---
 
 ## 🚀 Quick Start Guide
 
-Want to run the pipeline yourself? Follow these steps:
+Want to run the full stack yourself? Follow these steps:
 
 ### 1. Prerequisites
-Ensure you have **Python 3.10+** installed. Clone the repository and navigate to the project root.
+Ensure you have **Python 3.10+** and **Node.js 18+** installed. Clone the repository and navigate to the project root.
 
-### 2. Set Up Virtual Environment
+### 2. Set Up Virtual Environment & Python Dependencies
 It is highly recommended to use a virtual environment:
 ```bash
-# Create virtual environment
+# Create and activate virtual environment (Windows)
 python -m venv venv
-
-# Activate it (Windows)
 venv\Scripts\activate
-# Activate it (Mac/Linux)
-source venv/bin/activate
-```
 
-### 3. Install Dependencies
-```bash
+# Install Python dependencies (Scraper + FastAPI)
 pip install -r requirements.txt
 ```
-*(Note: If you plan on using GPU acceleration for TrOCR, ensure you install the CUDA-compatible version of PyTorch from the [official PyTorch website](https://pytorch.org/).)*
 
-### 4. Run the Pipeline
-The TrOCR model (`microsoft/trocr-base-printed`) will **automatically download** from Hugging Face on the first run. No manual model setup is required!
-
+### 3. Set Up the Frontend
 ```bash
-# Run the full pipeline (scrape all branches and export to Excel/CSV)
+cd frontend
+npm install
+```
+
+### 4. Running the Dashboard
+
+You need two terminals to run the full stack:
+
+**Terminal 1 (FastAPI Backend):**
+```bash
+# From the project root directory
+.\venv\Scripts\python.exe -m uvicorn api.main:app --host 0.0.0.0 --port 8001
+```
+
+**Terminal 2 (React Frontend):**
+```bash
+# From the frontend/ directory
+npm run dev
+```
+
+The frontend will load up on `http://localhost:5173/`.
+
+### 5. Running the Scraper
+The TrOCR model will **automatically download** from Hugging Face on the first run.
+```bash
+# Scrape all data
 python main.py
-
-# Scrape a specific branch
-python main.py --scrape-only --branch BTAD
-
-# Run in debug mode (shows the browser window)
-python main.py --scrape-only --no-headless
-
-# Generate Excel/CSV reports from previously scraped data
-python main.py --export-only
 ```
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Full-Stack Architecture
 
 ```
 BHEL PROJECT/
-├── main.py                     # 🎯 CLI Entry Point
-├── requirements.txt
+├── api/                        # ⚡ FastAPI Backend
+│   └── main.py                 # Serves CSV data as JSON endpoints
+│
+├── frontend/                   # 🎨 React + Vite Dashboard
+│   ├── src/pages/              # Dashboard, Students List, Student Detail pages
+│   └── src/components/         # Reusable UI components
 │
 ├── captcha_model/              # 🧠 Deep Learning Engine
-│   └── predict.py              # TrOCR Inference logic (Auto-downloads weights)
+│   └── predict.py              # TrOCR Inference logic
 │
 ├── scraper/                    # 🕸️ Automation Engine
-│   ├── scraper.py              # Selenium ASP.NET logic, CAPTCHA download, and retry logic
-│   └── enrollment.py           # Enrollment number logic/ranges
+│   ├── iums_scraper.py         # Advanced multi-page extraction (Fees, Profile, Academic)
+│   ├── scraper.py              # Base Selenium logic and CAPTCHA solving
+│   └── enrollment.py           # Enrollment number generation
 │
-├── data_processor/             # 📊 Data Wrangling Engine
-│   └── export.py               # Pandas logic for generating formatted Excel/CSV
-│
-└── data/                       # 📁 Output Directory
-    ├── raw/                    # Checkpoints and raw JSON output
-    ├── results.csv             # Unified CSV of all students
-    └── results.xlsx            # Formatted Excel workbook with branch-specific sheets
+└── data/                       # 📁 Output Directory (Git Ignored for Security)
+    ├── iums_profile.csv        # Extracted student personal details
+    ├── iums_academic.csv       # Extracted academic history and grades
+    └── iums_fee.csv            # Extracted fee payment records
 ```
 
 ---
 
-## 🧠 Deep Learning (TrOCR) Pipeline
+## 📊 The Analytics Dashboard
 
-How the CAPTCHA is solved in real-time:
-
-1. **Extraction**: Selenium executes JavaScript to extract the raw base64 data of the dynamically loaded CAPTCHA canvas (bypassing session-bound URL issues).
-2. **Inference**: The image is passed to `microsoft/trocr-base-printed` which uses a Vision Transformer (ViT) encoder and RoBERTa decoder to predict the text sequence.
-3. **Refinement**: Whitespace and illegal characters are stripped before injection back into the browser.
-
----
-
-## 📊 The Output (Excel & CSV)
-
-The final product is a highly polished `results.xlsx` file containing:
-- **Comprehensive Data**: SGPA, CGPA, Pass/Fail status, and course-by-course breakdowns (Credits & Grades).
-- **Auto-Formatting**: Conditional formatting highlights excellent SGPAs (🟢 ≥9.0) and failing grades (🔴).
-- **Segmented Sheets**: Individual sheets for each branch (AI & Data Science, AI & Machine Learning, Artificial Intelligence) alongside a Master sheet.
-- **Rankings**: Auto-computed rankings for students within their respective branches.
+The React dashboard visualizes the extracted data into actionable insights:
+- **Results & Analytics**: Stat cards, SGPA distribution charts, branch averages, pass/fail donuts, and Top 10 department rankings.
+- **Student Profiles Grid**: Searchable, visual grid of all extracted students with their current standing.
+- **Detailed Drill-downs**: Clicking a student reveals their personal details, fee timelines, academic history, and a dynamically normalized line chart showcasing their SGPA vs. Running CGPA growth trajectory.
 
 ---
 
-*Built as a comprehensive portfolio project demonstrating advanced web automation, applied deep learning, and data engineering.* 
+*Built as a comprehensive portfolio project demonstrating advanced web automation, applied deep learning, data engineering, and modern full-stack web development.* 
