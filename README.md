@@ -56,8 +56,8 @@ You need two terminals to run the full stack:
 
 **Terminal 1 (FastAPI Backend):**
 ```bash
-# From the project root directory
-.\venv\Scripts\python.exe -m uvicorn api.main:app --host 0.0.0.0 --port 8001
+# From the project root directory (ensure venv is activated)
+python -m uvicorn api.main:app --host 0.0.0.0 --port 8001
 ```
 
 **Terminal 2 (React Frontend):**
@@ -69,11 +69,25 @@ npm run dev
 The frontend will load up on `http://localhost:5173/`.
 
 ### 5. Running the Scraper
-The TrOCR model will **automatically download** from Hugging Face on the first run.
+The scraper has two distinct engines: the **Result Website** and the **IUMS Portal**. The TrOCR model will **automatically download** from Hugging Face on the first run.
+
+#### A. Scraping the Result Website (General Performance)
+This scrapes all students' SGPA, Pass/Fail statuses, and course breakdowns based on the enrollment ranges configured in `scraper/enrollment.py`.
 ```bash
-# Scrape all data
-python main.py
+# Scrape all students and export to CSV/Excel
+python main.py --mode result
 ```
+
+#### B. Scraping the IUMS Portal (Detailed Profiles & Fees)
+This logs into the internal portal to extract highly detailed personal profiles, semester fee payment histories, and academic history. This requires actual student login credentials.
+```bash
+# Scrape a single student
+python main.py --mode iums --enrollment BTAD24O1XXX --password YourPasswordHere
+
+# Scrape multiple students in bulk
+python main.py --mode iums --bulk-csv path/to/credentials.csv
+```
+*(Note: A bulk CSV must contain `enrollment` and `password` columns.)*
 
 ---
 

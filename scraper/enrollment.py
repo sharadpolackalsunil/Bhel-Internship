@@ -2,16 +2,16 @@
 Enrollment Number Generator
 ==============================
 Generates enrollment numbers for 3 branches at MITS Gwalior:
-    - BTAD24O1001 to BTAD24O1070  (AI & Data Science)
-    - BTAM24O1001 to BTAM24O1070  (AI & Machine Learning)
-    - BTAI24O1001 to BTAI24O1070  (Artificial Intelligence)
+    - BTAD24O1001 to BTAD24O1077  (AI & Data Science)
+    - BTAM24O1001 to BTAM24O1077  (AI & Machine Learning)
+    - BTAI24O1001 to BTAI24O1077  (Artificial Intelligence)
 
 Format: BTxx24O1YYY
     BT  = B.Tech
     xx  = Branch code (AD/AM/AI)
     24  = Year
     O1  = Section/campus code
-    YYY = Roll number (001-070)
+    YYY = Roll number (001-077)
 """
 
 # Branch configuration
@@ -22,7 +22,7 @@ BRANCHES = {
         'name': 'AI & Data Science',
         'short_name': 'AI_DS',
         'start_roll': 1,
-        'end_roll': 70,
+        'end_roll': 77,
     },
     'BTAM': {
         'code': 'BTAM',
@@ -30,7 +30,7 @@ BRANCHES = {
         'name': 'AI & Machine Learning',
         'short_name': 'AI_ML',
         'start_roll': 1,
-        'end_roll': 70,
+        'end_roll': 77,
     },
     'BTAI': {
         'code': 'BTAI',
@@ -38,7 +38,7 @@ BRANCHES = {
         'name': 'Artificial Intelligence',
         'short_name': 'AI',
         'start_roll': 1,
-        'end_roll': 70,
+        'end_roll': 77,
     },
 }
 
