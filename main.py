@@ -100,6 +100,13 @@ Examples:
     parser.add_argument('--raw-input', type=str, default=None,
                         help='Path to raw results JSON for export')
 
+    # IUMS params
+    parser.add_argument('--mode', type=str, choices=['result', 'iums'], default='result',
+                        help='Target portal to scrape: "result" for MITS Result, "iums" for IUMS portal')
+    parser.add_argument('--enrollment', type=str, help='Student enrollment for IUMS mode')
+    parser.add_argument('--password', type=str, help='Student password for IUMS mode')
+    parser.add_argument('--bulk-csv', type=str, help='Path to CSV with enrollment,password for bulk IUMS scraping')
+
     args = parser.parse_args()
 
     print("=" * 60)
@@ -107,36 +114,58 @@ Examples:
     print("  OCR (TrOCR) + Automated Data Extraction")
     print("=" * 60)
 
-    if args.scrape_only:
-        # Scrape only
-        model_path = args.model or MODEL_PATH
-        step_scrape(
+    model_path = args.model or MODEL_PATH
+
+    if args.mode == 'iums':
+        from scraper.iums_scraper import run_iums_scraper
+        
+        creds = []
+        if args.enrollment and args.password:
+            creds.append({'enrollment': args.enrollment, 'password': args.password})
+        elif args.bulk_csv:
+            if not os.path.exists(args.bulk_csv):
+                print(f" Bulk CSV not found: {args.bulk_csv}")
+                sys.exit(1)
+            import csv
+            with open(args.bulk_csv, 'r') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if 'enrollment' in row and 'password' in row:
+                        creds.append(row)
+        else:
+            template_path = os.path.join(PROJECT_ROOT, 'data', 'iums_credentials.csv')
+            if not os.path.exists(template_path):
+                os.makedirs(os.path.dirname(template_path), exist_ok=True)
+                with open(template_path, 'w') as f:
+                    f.write("enrollment,password\n")
+            print(f"\n Error: Please provide --enrollment and --password, or --bulk-csv.")
+            print(f" An empty template has been created at {template_path}")
+            sys.exit(1)
+            
+        run_iums_scraper(
+            credentials_list=creds,
             model_path=model_path,
-            headless=not args.no_headless,
-            branch_filter=args.branch,
-            resume=not args.no_resume,
+            headless=not args.no_headless
         )
-
-    elif args.export_only:
-        # Export only
-        step_export(raw_path=args.raw_input)
-
     else:
-        # Full pipeline
-        print("\n Running full pipeline: Scrape -> Export\n")
-
-        model_path = args.model or MODEL_PATH
-
-        # Step 1: Scrape
-        step_scrape(
-            model_path=model_path,
-            headless=not args.no_headless,
-            branch_filter=args.branch,
-            resume=not args.no_resume,
-        )
-
-        # Step 2: Export
-        step_export()
+        if args.scrape_only:
+            step_scrape(
+                model_path=model_path,
+                headless=not args.no_headless,
+                branch_filter=args.branch,
+                resume=not args.no_resume,
+            )
+        elif args.export_only:
+            step_export(raw_path=args.raw_input)
+        else:
+            print("\n Running full pipeline: Scrape -> Export\n")
+            step_scrape(
+                model_path=model_path,
+                headless=not args.no_headless,
+                branch_filter=args.branch,
+                resume=not args.no_resume,
+            )
+            step_export()
 
     print("\n Pipeline complete!")
 

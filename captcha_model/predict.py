@@ -87,8 +87,8 @@ class CaptchaSolver:
 
         extracted_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         
-        # Ensure no spaces
-        cleaned_text = "".join(extracted_text.split())
+        # Ensure no spaces and no periods
+        cleaned_text = "".join(extracted_text.split()).replace('.', '')
 
         return cleaned_text, 0.99
 
